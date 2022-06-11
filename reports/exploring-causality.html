@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.563">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Exploring causal inference with DAGs and Bayesian models</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+<script src="exploring-causality_files/libs/clipboard/clipboard.min.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/quarto.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/popper.min.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/anchor.min.js"></script>
+<link href="exploring-causality_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="exploring-causality_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="exploring-causality_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="exploring-causality_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="exploring-causality_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exploring causal inference with DAGs and Bayesian models</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header>
+
+<p>Lately, I’ve been reading quite a lot about causal inference in statistics and the various approaches developed through the decades. Pearl’s framework, which relies on directed acyclic graphs (DAGs) resonated with me the most; I really like DAGs as a way of expressing ideas about causality, and as a tool for tackling causal questions and building causal models.</p>
+<p>As I’ve been focused on Bayesian modeling for the past couple of years, I’ve found the generative modeling approach to be quite a useful way of approaching data analysis. The directed acyclic graph approach and the generative modeling approach seem to have a lot in common. However, I still feel like a difference is being made between the two. Because of this (and other pedagogic reasons), I’ve decided to explore some simple causal setups to gain (hopefully) a better understanding of both causal inference and the DAG/generative modeling frameworks.</p>
+<section id="case-1---three-variables-with-simple-confounding" class="level1">
+<h1>Case 1 - three variables with simple confounding</h1>
+<p>The first case I’m going to look at is a simple three-variable case where one variable acts as a confounder of the causal relationships of the remaining two variables. I’m talking about the case pictured below:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<p>
+<svg width="134pt" height="106pt" viewbox="0.00 0.00 134.21 106.41" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 102.41)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-102.41 130.21,-102.41 130.21,4 -4,4"></polygon> <!-- X --> <g id="node1" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-79.93" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-75.73" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y --> <g id="node2" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="99.21" cy="-80.41" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="99.21" y="-76.21" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.3,-80.11C56.72,-80.13 59.21,-80.15 61.7,-80.16"></path> <polygon fill="black" stroke="black" points="61.85,-83.66 71.87,-80.23 61.89,-76.66 61.85,-83.66"></polygon> </g> <!-- Z --> <g id="node3" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="63.59" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="63.59" y="-13.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Z&#45;&gt;X --> <g id="edge2" class="edge">
+<title>
+Z-&gt;X
+</title>
+<path fill="none" stroke="black" d="M53.59,-34.92C50.04,-40.93 45.97,-47.83 42.09,-54.4"></path> <polygon fill="black" stroke="black" points="39.06,-52.64 36.99,-63.03 45.09,-56.2 39.06,-52.64"></polygon> </g> <!-- Z&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M73.32,-35.05C76.78,-41.11 80.75,-48.06 84.52,-54.68"></path> <polygon fill="black" stroke="black" points="81.49,-56.42 89.49,-63.38 87.57,-52.96 81.49,-56.42"></polygon> </g> </g>
+</svg>
+</p>
+</div>
+</div>
+</div>
+<p>So, I’m assuming that the <span class="math inline">\(X\)</span> variable exerts a causal effect on the <span class="math inline">\(Y\)</span> variable, and that the <span class="math inline">\(Z\)</span> variable has a causal effect both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. Therefore, <span class="math inline">\(Z\)</span> creates a backdoor path from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span>, which means that it has to be adjusted for in order to get an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>.</p>
+<p>Before simulating some values for the variables, I’ll setup my Julia environment.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

@@ -1,0 +1,43 @@
+---
+title: 'Exploring causal inference with DAGs and Bayesian models'
+---
+
+Lately, I've been reading quite a lot about causal inference in statistics and
+the various approaches developed through the decades. Pearl's framework, which
+relies on directed acyclic graphs (DAGs) resonated with me the most; I really
+like DAGs as a way of expressing ideas about causality, and as a tool for
+tackling causal questions and building causal models.
+
+As I've been focused on Bayesian modeling for the past couple of years, I've
+found the generative modeling approach to be quite a useful way of approaching
+data analysis. The directed acyclic graph approach and the generative modeling
+approach seem to have a lot in common. However, I still feel like a difference
+is being made between the two. Because of this (and other pedagogic reasons),
+I've decided to explore some simple causal setups to gain (hopefully) a better
+understanding of both causal inference and the DAG/generative modeling
+frameworks.
+
+# Case 1 - three variables with simple confounding
+
+The first case I'm going to look at is a simple three-variable case where one
+variable acts as a confounder of the causal relationships of the remaining two
+variables. I'm talking about the case pictured below:
+
+```{dot}
+//| fig-align="center"
+digraph G {
+    layout=neato
+    X -> Y;
+    Z -> X;
+    Z -> Y;
+}
+```
+
+So, I'm assuming that the $X$ variable exerts a causal effect on the $Y$
+variable, and that the $Z$ variable has a causal effect both on $X$ and $Y$.
+Therefore, $Z$ creates a backdoor path from $X$ to $Y$, which means that it has
+to be adjusted for in order to get an unbiased estimate of the causal effect of
+$X$ on $Y$.
+
+Before simulating some values for the variables, I'll setup my Julia
+environment.
