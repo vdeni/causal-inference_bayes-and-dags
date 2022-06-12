@@ -24,9 +24,13 @@ variable acts as a confounder of the causal relationships of the remaining two
 variables. I'm talking about the case pictured below:
 
 ```{dot}
-//| fig-align="center"
+//| fig-align: center
+//| fig-cap: Three variables, simple confounding.
+//| label: fig-three-var-confounding
+
 digraph G {
-    layout=neato
+    layout=dot;
+    rankdir=LR;
     X -> Y;
     Z -> X;
     Z -> Y;
@@ -39,5 +43,54 @@ Therefore, $Z$ creates a backdoor path from $X$ to $Y$, which means that it has
 to be adjusted for in order to get an unbiased estimate of the causal effect of
 $X$ on $Y$.
 
-Before simulating some values for the variables, I'll setup my Julia
-environment.
+Before simulating some values for the variables, I'll load some Julia packages:
+
+```{julia}
+using Pkg
+
+Pkg.activate("..")
+
+using Distributions
+using Random
+using Turing
+```
+
+Now, let's simulate data from the data generating process described in
+@fig-three-var-confounding. For simplicity, I'll assume all variables are
+distributed normally with the same standard deviation $\sigma = 1$, but with
+different means. Further, I'll assume that errors $\varepsilon$ are also
+distributed normally with $\mu = 0$ and $\sigma = 1$. Also for simplicity, I'll
+assume that the relationships between the variables can be described by a simple
+linear model. Therefore, we have:
+
+\begin{align}
+    Z &\sim \text{normal}(1, 1) \\
+    x_i &\sim \text{normal}(\mu_{x_i}, 1) \\
+    y_i &\sim \text{normal}(\mu_{y_i}, 1) \\
+    \mu_{x_i} &= 3 z_i \\
+    \mu_{y_i} &= 2 x_i + 4 z_i
+\end{align}
+
+```{julia}
+X_distr = Distributions.Normal(1)
+Y_distr = Distributions.Normal(2)
+Z_distr = Distributions.Normal(3);
+```
+
+```{dot}
+//| fig-cap: Causal effects for three variables, simple confounding scenario.
+//| label: fig-three-var-confounding-effs
+digraph effects_G {
+    layout=dot;
+    rankdir=LR;
+    X -> Y [label="b_xy = 2"];
+    Z -> X [label="b_zx = 3"];
+    Z -> Y [label="b_zy = 4"];
+}
+```
+
+With that in mind, I'll simulate the data:
+
+```{julia}
+N = 1e3
+```
