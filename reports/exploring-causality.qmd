@@ -52,16 +52,20 @@ Pkg.activate("..")
 
 using Distributions
 using Random
+using Statistics
+using StatsModels
 using Turing
+using GLM
+using DataFrames
+
+Random.seed!(1)
 ```
 
 Now, let's simulate data from the data generating process described in
 @fig-three-var-confounding. For simplicity, I'll assume all variables are
 distributed normally with the same standard deviation $\sigma = 1$, but with
-different means. Further, I'll assume that errors $\varepsilon$ are also
-distributed normally with $\mu = 0$ and $\sigma = 1$. Also for simplicity, I'll
-assume that the relationships between the variables can be described by a simple
-linear model. Therefore, we have:
+different means. Also for simplicity, I'll assume that the relationships between
+the variables can be described by a simple linear model. Therefore, we have:
 
 \begin{align}
     Z &\sim \text{normal}(1, 1) \\
@@ -70,12 +74,6 @@ linear model. Therefore, we have:
     \mu_{x_i} &= 3 z_i \\
     \mu_{y_i} &= 2 x_i + 4 z_i
 \end{align}
-
-```{julia}
-X_distr = Distributions.Normal(1)
-Y_distr = Distributions.Normal(2)
-Z_distr = Distributions.Normal(3);
-```
 
 ```{dot}
 //| fig-cap: Causal effects for three variables, simple confounding scenario.
@@ -89,8 +87,32 @@ digraph effects_G {
 }
 ```
 
-With that in mind, I'll simulate the data:
+With that in mind, I'll simulate the data and put it in a data frame:
 
 ```{julia}
-N = 1e3
+Z_distr = Distributions.Normal(3);
+
+N = 1000 # number of simulated draws
+
+Z = Random.rand(Z_distr,
+                N)
+# create X values
+x_mu = 3 * Z
+
+X_distr = Distributions.Normal.(x_mu)
+
+X = Random.rand.(X_distr)
+
+# create Y values
+y_mu = 2 * X + 4 * Z
+
+Y_distr = Distributions.Normal.(y_mu)
+
+Y = Random.rand.(Y_distr)
+
+d = DataFrames.DataFrame(["Y" => Y,
+                          "X" => X,
+                          "Z" => Z])
+
+d[1:10, :]
 ```
