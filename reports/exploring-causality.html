@@ -187,7 +187,7 @@ Z-&gt;Y
 <div class="cell-output cell-output-stderr">
 <pre><code>  Activating project at `~/Documents/causal-inference_bayes-and-dags`</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="19">
 <pre><code>TaskLocalRNG()</code></pre>
 </div>
 </div>
@@ -268,9 +268,29 @@ Z-&gt;Y
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"Z"</span> <span class="op">=&gt;</span> Z])</span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="21">
+<div class="cell-output cell-output-display" data-execution_count="20">
 
 <div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>30.5775</td><td>9.24194</td><td>2.92942</td></tr><tr><th>2</th><td>33.7239</td><td>10.2901</td><td>3.53148</td></tr><tr><th>3</th><td>18.7268</td><td>5.12555</td><td>2.19315</td></tr><tr><th>4</th><td>58.1601</td><td>17.2986</td><td>5.45699</td></tr><tr><th>5</th><td>36.9501</td><td>10.6265</td><td>4.16487</td></tr><tr><th>6</th><td>30.6161</td><td>9.45576</td><td>3.26756</td></tr><tr><th>7</th><td>46.2414</td><td>13.9016</td><td>4.74993</td></tr><tr><th>8</th><td>20.7795</td><td>5.37541</td><td>2.17398</td></tr><tr><th>9</th><td>17.4975</td><td>4.57581</td><td>1.95725</td></tr><tr><th>10</th><td>26.9465</td><td>8.12588</td><td>2.67087</td></tr></tbody></table></div>
+</div>
+</div>
+<p>Now, Pearl’s DAG framework tells us that fitting a, in this case, linear model with <span class="math inline">\(X\)</span> as a predictor and <span class="math inline">\(Y\)</span> as criterion would give us a biased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> due to the backdoor path over <span class="math inline">\(Z\)</span> (<span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>). Therefore, fitting a linear regression model should give an estimate of the <span class="math inline">\(b\)</span> coefficient for <span class="math inline">\(X\)</span> different than <span class="math inline">\(2\)</span>, which was coded while creating the data.</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
+
+Y ~ 1 + X
+
+Coefficients:
+────────────────────────────────────────────────────────────────────────
+               Coef.  Std. Error       t  Pr(&gt;|t|)  Lower 95%  Upper 95%
+────────────────────────────────────────────────────────────────────────
+(Intercept)  1.46295   0.14861      9.84    &lt;1e-21    1.17132    1.75457
+X            3.17275   0.0153718  206.40    &lt;1e-99    3.14259    3.20292
+────────────────────────────────────────────────────────────────────────</code></pre>
 </div>
 </div>
 </section>

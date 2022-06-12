@@ -116,3 +116,17 @@ d = DataFrames.DataFrame(["Y" => Y,
 
 d[1:10, :]
 ```
+
+Now, Pearl's DAG framework tells us that fitting a, in this case, linear model
+with $X$ as a predictor and $Y$ as criterion would give us a biased estimate of
+the causal effect of $X$ on $Y$ due to the backdoor path over $Z$
+($X \textleftarrow Z \textrightarrow Y$). Therefore, fitting a linear regression
+model should give an estimate of the $b$ coefficient for $X$ different than $2$,
+which was coded while creating the data.
+
+```{julia}
+f = StatsModels.@formula(Y ~ X)
+
+fit_y_x = GLM.lm(f,
+                 d)
+```
