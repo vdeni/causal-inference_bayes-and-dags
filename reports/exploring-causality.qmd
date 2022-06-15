@@ -57,6 +57,11 @@ using StatsModels
 using Turing
 using GLM
 using DataFrames
+using Markdown
+
+include(joinpath("..",
+                 "helpers",
+                 "text-formatting.jl"))
 
 Random.seed!(1)
 ```
@@ -130,3 +135,31 @@ f = StatsModels.@formula(Y ~ X)
 fit_y_x = GLM.lm(f,
                  d)
 ```
+
+```{julia}
+#| echo: false
+
+x_idx = findall(x -> x == "X",
+                coefnames(fit_y_x))[1]
+
+Markdown.parse("""As can be seen, we get
+               \$X = $(coef(fit_y_x)[x_idx] |> round_2)\$, which is different
+               than the value set in the simulation.
+               """)
+```
+
+According to Pearl's framework, we should also be able to get to the causal
+effect of $X$ on $Y$ if we control for the confounder $Z$. Therefore, let's try
+fitting another model, this time including $Z$ as a variable in the regression
+model alongside $X$.
+
+```{julia}
+f = StatsModels.@formula(Y ~ X + Z)
+
+fit_y_xz = GLM.lm(f,
+                  d)
+```
+
+Now we get a $b_{YX}$ coefficient which corresponds to the one we've coded up
+while simulating the data. The estimate of the effect of $Z$ on $Y$ is also in
+line with the value which we've coded up.

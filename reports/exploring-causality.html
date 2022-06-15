@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-0.9.563">
+<meta name="generator" content="quarto-0.9.579">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -182,12 +182,17 @@ Z-&gt;Y
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Turing</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">GLM</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">DataFrames</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="bu">Random</span>.<span class="fu">seed!</span>(<span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Markdown</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="fu">joinpath</span>(<span class="st">".."</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"helpers"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"text-formatting.jl"</span>))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="bu">Random</span>.<span class="fu">seed!</span>(<span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>  Activating project at `~/Documents/causal-inference_bayes-and-dags`</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="19">
+<div class="cell-output cell-output-display" data-execution_count="73">
 <pre><code>TaskLocalRNG()</code></pre>
 </div>
 </div>
@@ -268,7 +273,7 @@ Z-&gt;Y
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"Z"</span> <span class="op">=&gt;</span> Z])</span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="74">
 
 <div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>30.5775</td><td>9.24194</td><td>2.92942</td></tr><tr><th>2</th><td>33.7239</td><td>10.2901</td><td>3.53148</td></tr><tr><th>3</th><td>18.7268</td><td>5.12555</td><td>2.19315</td></tr><tr><th>4</th><td>58.1601</td><td>17.2986</td><td>5.45699</td></tr><tr><th>5</th><td>36.9501</td><td>10.6265</td><td>4.16487</td></tr><tr><th>6</th><td>30.6161</td><td>9.45576</td><td>3.26756</td></tr><tr><th>7</th><td>46.2414</td><td>13.9016</td><td>4.74993</td></tr><tr><th>8</th><td>20.7795</td><td>5.37541</td><td>2.17398</td></tr><tr><th>9</th><td>17.4975</td><td>4.57581</td><td>1.95725</td></tr><tr><th>10</th><td>26.9465</td><td>8.12588</td><td>2.67087</td></tr></tbody></table></div>
 </div>
@@ -279,7 +284,7 @@ Z-&gt;Y
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="21">
+<div class="cell-output cell-output-display" data-execution_count="75">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X
@@ -293,6 +298,29 @@ X            3.17275   0.0153718  206.40    &lt;1e-99    3.14259    3.20292
 ────────────────────────────────────────────────────────────────────────</code></pre>
 </div>
 </div>
+<p>As can be seen, we get <span class="math inline">\(X = 3.17\)</span>, which is different than the value set in the simulation.</p>
+<p>According to Pearl’s framework, we should also be able to get to the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> if we control for the confounder <span class="math inline">\(Z\)</span>. Therefore, let’s try fitting another model, this time including <span class="math inline">\(Z\)</span> as a variable in the regression model alongside <span class="math inline">\(X\)</span>.</p>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X <span class="op">+</span> Z)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="77">
+<pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
+
+Y ~ 1 + X + Z
+
+Coefficients:
+─────────────────────────────────────────────────────────────────────────
+                 Coef.  Std. Error      t  Pr(&gt;|t|)  Lower 95%  Upper 95%
+─────────────────────────────────────────────────────────────────────────
+(Intercept)  0.0246506   0.099801    0.25    0.8050  -0.171193   0.220495
+X            2.00207     0.0311896  64.19    &lt;1e-99   1.94087    2.06328
+Z            3.97688     0.100799   39.45    &lt;1e-99   3.77908    4.17468
+─────────────────────────────────────────────────────────────────────────</code></pre>
+</div>
+</div>
+<p>Now we get a <span class="math inline">\(b_{YX}\)</span> coefficient which corresponds to the one we’ve coded up while simulating the data. The estimate of the effect of <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> is also in line with the value which we’ve coded up.</p>
 </section>
 
 </main>
