@@ -23,7 +23,7 @@ The first case I'm going to look at is a simple three-variable case where one
 variable acts as a confounder of the causal relationships of the remaining two
 variables. I'm talking about the case pictured below:
 
-```{dot}
+```{dot fig_dag_no-coef}
 //| fig-align: center
 //| fig-cap: Three variables, simple confounding.
 //| label: fig-three-var-confounding
@@ -45,7 +45,7 @@ $X$ on $Y$.
 
 Before simulating some values for the variables, I'll load some Julia packages:
 
-```{julia}
+```{julia setup}
 using Pkg
 
 Pkg.activate("..")
@@ -80,7 +80,7 @@ the variables can be described by a simple linear model. Therefore, we have:
     \mu_{y_i} &= 2 x_i + 4 z_i
 \end{align}
 
-```{dot}
+```{dot fig_dag_effects}
 //| fig-cap: Causal effects for three variables, simple confounding scenario.
 //| label: fig-three-var-confounding-effs
 digraph effects_G {
@@ -94,7 +94,7 @@ digraph effects_G {
 
 With that in mind, I'll simulate the data and put it in a data frame:
 
-```{julia}
+```{julia generate-data}
 Z_distr = Distributions.Normal(3);
 
 N = 1000 # number of simulated draws
@@ -129,7 +129,7 @@ the causal effect of $X$ on $Y$ due to the backdoor path over $Z$
 model should give an estimate of the $b$ coefficient for $X$ different than $2$,
 which was coded while creating the data.
 
-```{julia}
+```{julia fit_confounded}
 f = StatsModels.@formula(Y ~ X)
 
 fit_y_x = GLM.lm(f,
@@ -153,7 +153,7 @@ effect of $X$ on $Y$ if we control for the confounder $Z$. Therefore, let's try
 fitting another model, this time including $Z$ as a variable in the regression
 model alongside $X$.
 
-```{julia}
+```{julia fit_non-confounded}
 f = StatsModels.@formula(Y ~ X + Z)
 
 fit_y_xz = GLM.lm(f,
@@ -163,3 +163,48 @@ fit_y_xz = GLM.lm(f,
 Now we get a $b_{YX}$ coefficient which corresponds to the one we've coded up
 while simulating the data. The estimate of the effect of $Z$ on $Y$ is also in
 line with the value which we've coded up.
+
+Okay, now to the part that's a bit more tricky. I want to explore the
+relationships between Bayesian networks and Bayesian generative models. If my
+understanding is correct, a Bayesian generative model specified in line with the
+actual data generating mechanism should be able to provide unbiased estimates of
+causal effects. I'll try coding up the model represented by the DAG using
+`Turing.jl`.
+
+```{julia model_three-var-simple-confound}
+Turing.@model function gen_model_y_xz(X, Y, Z)
+    s ~ Turing.Exponential(1)
+
+    b_ZX ~ Turing.Normal(2, 1)
+    b_XY ~ Turing.Normal(2, 1)
+    b_ZY ~ Turing.Normal(2, 1)
+
+    Z ~ Turing.Normal(2, s)
+
+    for i in eachindex(X)
+        X[i] ~ Turing.Normal(Z[i] * b_ZX, s)
+        
+        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY, s)
+    end
+end
+```
+
+And sample from the model:
+
+```{julia sample_three-var-simple-confound}
+chains = Turing.sample(gen_model_y_xz(d.X,
+                                      d.Y,
+                                      d.Z),
+                       Turing.NUTS(1000,
+                                   0.80),
+                       Turing.MCMCThreads(),
+                       3000,
+                       4)
+```
+
+Indeed, the parameters estimated in this way correspond to the ones we've
+simulated earlier. Now, this probably isn't that surprising, given that what
+we're doing is, basically, generating the data anew. Still, that *is*
+comforting, I guess.
+
+SD not estimated properly.
