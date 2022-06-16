@@ -239,14 +239,28 @@ end
 ```{julia sample_three-var-simple-confound_t}
 #| cache: true
 
-chains = Turing.sample(gen_model_y_xz_t(d.X,
-                                        d.Y,
-                                        d.Z),
-                       Turing.NUTS(1000,
-                                   0.80),
-                       Turing.MCMCThreads(),
-                       3000,
-                       4)
+chains_t = Turing.sample(gen_model_y_xz_t(d.X,
+                                         d.Y,
+                                         d.Z),
+                         Turing.NUTS(1000,
+                                     0.80),
+                         Turing.MCMCThreads(),
+                         3000,
+                         4)
 ```
 
 Luckily, this also seems to work. So we can be a bit off.
+
+Now, before moving on to Bayesian networks, I'll go back to the normal-Z model
+and check the residuals (without taking into account any uncertainty) of the
+model. In other words, I'll check how the values of the $Y$ variable predicted
+from the fit model (using parameter point estimates) --- $\hat{Y}$ --- compare
+to the observed $Y$ values.
+
+```{julia}
+bs = MCMCChains.summarystats(chains)[:, [:parameters, :mean]] |>
+    DataFrames.DataFrame
+
+bs = bs[Not(1), :]
+```
+
