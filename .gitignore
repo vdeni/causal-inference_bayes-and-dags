@@ -24,3 +24,4 @@ docs/site/
 Manifest.toml
 
 reports/exploring-causality_files/**/*
+reports/*.ipynb

@@ -95,23 +95,24 @@ digraph effects_G {
 With that in mind, I'll simulate the data and put it in a data frame:
 
 ```{julia generate-data}
-Z_distr = Distributions.Normal(3);
+Z_distr = Distributions.Normal(3, 1);
 
 N = 1000 # number of simulated draws
 
 Z = Random.rand(Z_distr,
                 N)
+
 # create X values
 x_mu = 3 * Z
 
-X_distr = Distributions.Normal.(x_mu)
+X_distr = Distributions.Normal.(x_mu, 1)
 
 X = Random.rand.(X_distr)
 
 # create Y values
 y_mu = 2 * X + 4 * Z
 
-Y_distr = Distributions.Normal.(y_mu)
+Y_distr = Distributions.Normal.(y_mu, 1)
 
 Y = Random.rand.(Y_distr)
 
@@ -175,16 +176,18 @@ causal effects. I'll try coding up the model represented by the DAG using
 Turing.@model function gen_model_y_xz(X, Y, Z)
     s ~ Turing.Exponential(1)
 
-    b_ZX ~ Turing.Normal(2, 1)
-    b_XY ~ Turing.Normal(2, 1)
-    b_ZY ~ Turing.Normal(2, 1)
+    b_XZ ~ Turing.Normal(2, 1)
+    b_YX ~ Turing.Normal(2, 1)
+    b_YZ ~ Turing.Normal(2, 1)
 
     Z ~ Turing.Normal(2, s)
 
     for i in eachindex(X)
-        X[i] ~ Turing.Normal(Z[i] * b_ZX, s)
-        
-        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY, s)
+        X[i] ~ Turing.Normal(Z[i] * b_XZ,
+                             s)
+ 
+        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
+                             s)
     end
 end
 ```
@@ -192,6 +195,9 @@ end
 And sample from the model:
 
 ```{julia sample_three-var-simple-confound}
+#| message: false
+#| cache: true
+
 chains = Turing.sample(gen_model_y_xz(d.X,
                                       d.Y,
                                       d.Z),
@@ -207,4 +213,40 @@ simulated earlier. Now, this probably isn't that surprising, given that what
 we're doing is, basically, generating the data anew. Still, that *is*
 comforting, I guess.
 
-SD not estimated properly.
+I'll try repeating the analysis using a distribution for the $Z$ variable which
+I know to be incorrect - the t-distribution.
+
+```{julia model_three-var-simple-confound_t}
+Turing.@model function gen_model_y_xz_t(X, Y, Z)
+    s ~ Turing.Exponential(1)
+
+    b_XZ ~ Turing.Normal(2, 1)
+    b_YX ~ Turing.Normal(2, 1)
+    b_YZ ~ Turing.Normal(2, 1)
+
+    Z ~ Turing.TDist(10)
+
+    for i in eachindex(X)
+        X[i] ~ Turing.Normal(Z[i] * b_XZ,
+                             s)
+ 
+        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
+                             s)
+    end
+end
+```
+
+```{julia sample_three-var-simple-confound_t}
+#| cache: true
+
+chains = Turing.sample(gen_model_y_xz_t(d.X,
+                                        d.Y,
+                                        d.Z),
+                       Turing.NUTS(1000,
+                                   0.80),
+                       Turing.MCMCThreads(),
+                       3000,
+                       4)
+```
+
+Luckily, this also seems to work. So we can be a bit off.
