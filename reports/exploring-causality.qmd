@@ -58,6 +58,7 @@ using Turing
 using GLM
 using DataFrames
 using Markdown
+using StatsPlots
 
 include(joinpath("..",
                  "helpers",
@@ -86,9 +87,9 @@ the variables can be described by a simple linear model. Therefore, we have:
 digraph effects_G {
     layout=dot;
     rankdir=LR;
-    X -> Y [label="b_xy = 2"];
-    Z -> X [label="b_zx = 3"];
-    Z -> Y [label="b_zy = 4"];
+    X -> Y [label="b_yx = 2"];
+    Z -> X [label="b_xz = 3"];
+    Z -> Y [label="b_yz = 4"];
 }
 ```
 
@@ -240,8 +241,8 @@ end
 #| cache: true
 
 chains_t = Turing.sample(gen_model_y_xz_t(d.X,
-                                         d.Y,
-                                         d.Z),
+                                          d.Y,
+                                          d.Z),
                          Turing.NUTS(1000,
                                      0.80),
                          Turing.MCMCThreads(),
@@ -251,16 +252,108 @@ chains_t = Turing.sample(gen_model_y_xz_t(d.X,
 
 Luckily, this also seems to work. So we can be a bit off.
 
-Now, before moving on to Bayesian networks, I'll go back to the normal-Z model
-and check the residuals (without taking into account any uncertainty) of the
-model. In other words, I'll check how the values of the $Y$ variable predicted
-from the fit model (using parameter point estimates) --- $\hat{Y}$ --- compare
-to the observed $Y$ values.
+What I want to wrap my head around next is the relationship between causal DAGs
+and Bayesian networks. If my understanding is correct, they should be pretty
+similar, with the main difference being that causal DAGs make certain
+assumptions regarding the data generating process, which allow us to make causal
+claims. However, if my understanding is correct, both causal DAGs and Bayesian
+networks should be able to make predictions of similar accuracy. That would mean
+that values $\hat{y}^{c-DAG}$ predicted from the causal DAG should be very
+similar to the values $\hat{y}^{BN}$ predicted by a Bayesian network.
 
-```{julia}
-bs = MCMCChains.summarystats(chains)[:, [:parameters, :mean]] |>
-    DataFrames.DataFrame
+To check this claim, I'll try modeling the data according to the following
+graph, which we know to be false:
 
-bs = bs[Not(1), :]
+```{dot fig_bn}
+//| fig-align: center
+//| fig-cap: The obviously false DAG.
+//| label: fig-three-var-confounding
+
+digraph G {
+    layout=dot;
+    rankdir=LR;
+    X -> Y;
+    X -> Z;
+    Z -> Y;
+}
 ```
 
+```{julia model_bn_x-confound}
+#| eval: false
+
+Turing.@model function bn_model_y_xz(X, Y, Z)
+    s ~ Turing.Exponential(1)
+
+    b_ZX ~ Turing.Normal(2, 1)
+    b_YX ~ Turing.Normal(2, 1)
+    b_YZ ~ Turing.Normal(2, 1)
+
+    X ~ Turing.Normal(2, 1)
+
+    for i in eachindex(X)
+        Z[i] ~ Turing.Normal(X[i] * b_ZX,
+                             s)
+ 
+        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
+                             s)
+    end
+end
+```
+
+```{julia sample_bn_x-confound}
+#| cache: true
+
+chains_x_conf = Turing.sample(bn_model_y_xz(d.X,
+                                            d.Y,
+                                            d.Z),
+                              Turing.NUTS(1000,
+                                          0.80),
+                              Turing.MCMCThreads(),
+                              3000,
+                              4)
+```
+
+So, the coefficients for the effect of $X$ on $Y$ and $Z$ on $Y$ are actually
+quite fine. The coefficient for the effect of $X$ on $Z$ is, of course,
+gibberish. But how do the predicted $Y$ values from this model compare to the
+values predicted from the true DAG?
+
+```{julia fig_residuals}
+pred_gen_model_y_xz = gen_model_y_xz(d.X,
+                                     fill(missing,
+                                          N),
+                                     d.Z)
+
+y_hat_dag = Turing.predict(pred_gen_model_y_xz,
+                           chains)
+
+pred_bn_model_y_xz = bn_model_y_xz(d.X,
+                                   fill(missing,
+                                        N),
+                                   d.Z)
+
+y_hat_bn = Turing.predict(pred_bn_model_y_xz,
+                          chains_x_conf)
+
+d_dag_bn = DataFrames.DataFrame("Y_dag" =>
+                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
+                                "Y_bn" =>
+                                    MCMCChains.summarystats(y_hat_bn)[:, :mean])
+
+p_compare = StatsPlots.@df d_dag_bn #=
+    =# StatsPlots.scatter(:Y_dag,
+                          :Y_bn;
+                          legend = false,
+                          markercolor = :black,
+                          markeralpha = 0.3,
+                          markerstrokecolor = nothing,
+                          xlabel = "DAG predicted",
+                          ylabel = "Bayesian network predicted")
+
+StatsPlots.plot!(p_compare,
+                 x -> x)
+
+```
+
+For all practical intents and purposes (or just "ignoring random differences due
+to the stochastic nature of MCMC"), the two models yield identical predictions.
