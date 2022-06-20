@@ -351,20 +351,7 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
                                 "Y_bn" =>
                                     MCMCChains.summarystats(y_hat_bn)[:, :mean])
 
-p_compare = StatsPlots.@df d_dag_bn #=
-    =# StatsPlots.scatter(:Y_dag,
-                          :Y_bn;
-                          legend = false,
-                          markercolor = :black,
-                          markeralpha = 0.3,
-                          markerstrokecolor = nothing,
-                          xlabel = "DAG predicted",
-                          ylabel = "Bayesian network predicted")
-
-StatsPlots.plot!(p_compare,
-                 x -> x;
-                 linecolor = :red,
-                 linestyle = :dash)
+compare_yhat(d_dag_bn)
 ```
 
 For all practical intents and purposes (or just "ignoring random differences due
@@ -436,20 +423,7 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
                                 "Y_bn" =>
                                     MCMCChains.summarystats(y_hat_bn)[:, :mean])
 
-p_compare = StatsPlots.@df d_dag_bn #=
-    =# StatsPlots.scatter(:Y_dag,
-                          :Y_bn;
-                          legend = false,
-                          markercolor = :black,
-                          markeralpha = 0.3,
-                          markerstrokecolor = nothing,
-                          xlabel = "DAG predicted",
-                          ylabel = "Bayesian network predicted")
-
-StatsPlots.plot!(p_compare,
-                 x -> x;
-                 linecolor = :red,
-                 linestyle = :dash)
+compare_yhat(d_dag_bn)
 ```
 
 Much to my surprise, these two also make identical predictions!
