@@ -25,3 +25,4 @@ Manifest.toml
 
 reports/exploring-causality_files/**/*
 reports/*.ipynb
+reports/.jupyter_cache/

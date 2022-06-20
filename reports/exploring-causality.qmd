@@ -2,6 +2,8 @@
 title: 'Exploring causal inference with DAGs and Bayesian models'
 author: Denis Vlašiček
 date: today
+execute:
+    cache: true
 ---
 
 Lately, I've been reading quite a lot about causal inference in statistics and
@@ -151,7 +153,8 @@ fit_y_x = GLM.lm(f,
 x_idx = findall(x -> x == "X",
                 coefnames(fit_y_x))[1]
 
-Markdown.parse("""As can be seen, we get
+Markdown.parse("""
+               As can be seen, we get
                \$X = $(coef(fit_y_x)[x_idx] |> round_2)\$, which is different
                than the value set in the simulation.
                """)
@@ -426,4 +429,83 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
 compare_yhat(d_dag_bn)
 ```
 
-Much to my surprise, these two also make identical predictions!
+Much to my surprise, these two also make identical predictions! So, it would
+seem that Bayesian networks and generative models fit to causal DAGs *do* lead
+to the same predicted values. This may be especially important since the
+generative model was fit in accordance with the true data-generating process,
+while the Bayesian network was not.
+
+However, what further interests me is whether there's a difference between the
+two models' predictions when we simulate an intervention. That is, if we were to
+*set* $X$ equal to some value $x$, would our models predict the same $Y$ value?
+
+According to my understanding of causal DAGs, such an intervention would
+correspond to creating a mutilated graph, with all arrows pointing *into* the
+$X$ node being deleted. Therefore, we'd have the following two graphs:
+
+```{dot fig_mutilated-graphs_simple-confounding}
+//| fig-align: center
+//| fig-cap: Mutilated graphs for simple confounding with three variables.
+//| label: fig-mutil-graphs_simple-confounding
+
+digraph {
+    layout=dot;
+    rankdir="TB";
+
+    subgraph mutil_G_true {
+        X_1 [label="X = x"];
+        Z_1 [label="Z"];
+        Y_1 [label="Y"];
+
+        X_1 -> Y_1;
+        Z_1 -> Y_1;
+    }
+
+    subgraph mutil_G_false {
+        X_2 [label="X = x"];
+        Z_2 [label="Z"];
+        Y_2 [label="Y"];
+
+        X_2 -> Y_2;
+        Z_2 -> Y_2;
+    }
+}
+```
+
+So, in this case, we get the same graph. But do we get the same predictions?
+
+```{julia}
+#| echo: false
+
+Markdown.parse("""
+               Let's try setting \$X\$ to the mean of its observed values,
+               $(mean(d.X) |> round_2) and see what predictions we'll get.
+               """)
+```
+
+```{julia fig_compare_dag-bn-x-confound_mutilated}
+pred_gen_model_y_xz = gen_model_y_xz(fill(mean(d.X),
+                                          N),
+                                     fill(missing,
+                                          N),
+                                     d.Z)
+
+y_hat_dag = Turing.predict(pred_gen_model_y_xz,
+                           chains)
+
+pred_bn_model_y_xz_indep = bn_model_y_xz_indep(fill(mean(d.X),
+                                                    N),
+                                               fill(missing,
+                                                    N),
+                                               d.Z)
+
+y_hat_bn = Turing.predict(pred_bn_model_y_xz_indep,
+                          chains_xz_indep)
+
+d_dag_bn = DataFrames.DataFrame("Y_dag" =>
+                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
+                                "Y_bn" =>
+                                    MCMCChains.summarystats(y_hat_bn)[:, :mean])
+
+compare_yhat(d_dag_bn)
+```
