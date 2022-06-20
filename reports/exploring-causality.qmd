@@ -1,5 +1,7 @@
 ---
 title: 'Exploring causal inference with DAGs and Bayesian models'
+author: Denis Vlašiček
+date: today
 ---
 
 Lately, I've been reading quite a lot about causal inference in statistics and
@@ -64,6 +66,10 @@ include(joinpath("..",
                  "helpers",
                  "text-formatting.jl"))
 
+include(joinpath("..",
+                 "helpers",
+                 "plots.jl"))
+
 Random.seed!(1)
 ```
 
@@ -118,9 +124,9 @@ Y_distr = Distributions.Normal.(y_mu, 1)
 
 Y = Random.rand.(Y_distr)
 
-d = DataFrames.DataFrame(["Y" => Y,
-                          "X" => X,
-                          "Z" => Z])
+d = DataFrames.DataFrame("Y" => Y,
+                         "X" => X,
+                         "Z" => Z)
 
 d[1:10, :]
 ```
@@ -218,19 +224,19 @@ we're doing is, basically, generating the data anew. Still, that *is*
 comforting, I guess.
 
 I'll try repeating the analysis using a distribution for the $Z$ variable which
-I know to be incorrect - the t-distribution.
+I know to be incorrect - the Cauchy distribution with location 3 and scale 1.
 
-```{julia model_three-var-simple-confound_t}
-Turing.@model function gen_model_y_xz_t(X,
-                                        Y,
-                                        Z)
+```{julia model_three-var-simple-confound_cauchy}
+Turing.@model function gen_model_y_xz_cauchy(X,
+                                             Y,
+                                             Z)
     s ~ Turing.Exponential(1)
 
     b_XZ ~ Turing.Normal(2, 1)
     b_YX ~ Turing.Normal(2, 1)
     b_YZ ~ Turing.Normal(2, 1)
 
-    Z ~ Turing.TDist(10)
+    Z ~ Turing.Cauchy(3, 1)
 
     for i in eachindex(X)
         X[i] ~ Turing.Normal(Z[i] * b_XZ,
@@ -242,20 +248,20 @@ Turing.@model function gen_model_y_xz_t(X,
 end
 ```
 
-```{julia sample_three-var-simple-confound_t}
+```{julia sample_three-var-simple-confound_cauchy}
 #| cache: true
 
-chains_t = Turing.sample(gen_model_y_xz_t(d.X,
-                                          d.Y,
-                                          d.Z),
-                         Turing.NUTS(1000,
-                                     0.80),
-                         Turing.MCMCThreads(),
-                         3000,
-                         4)
+chains_cauchy = Turing.sample(gen_model_y_xz_cauchy(d.X,
+                                                    d.Y,
+                                                    d.Z),
+                              Turing.NUTS(1000,
+                                          0.80),
+                              Turing.MCMCThreads(),
+                              3000,
+                              4)
 ```
 
-Luckily, this also seems to work. So we can be a bit off.
+Luckily, this also seems to work. So we can be somewhat off.
 
 What I want to wrap my head around next is the relationship between causal DAGs
 and Bayesian networks. If my understanding is correct, they should be pretty
@@ -269,10 +275,10 @@ similar to the values $\hat{y}^{BN}$ predicted by a Bayesian network.
 To check this claim, I'll try modeling the data according to the following
 graph, which we know to be false:
 
-```{dot fig_bn}
+```{dot fig_bn_x-confound}
 //| fig-align: center
 //| fig-cap: The obviously false DAG.
-//| label: fig-three-var-confounding
+//| label: fig_three-var-confounding-x-confound
 
 digraph G {
     layout=dot;
@@ -357,14 +363,16 @@ p_compare = StatsPlots.@df d_dag_bn #=
 
 StatsPlots.plot!(p_compare,
                  x -> x;
-                 linecolor = :red)
-
+                 linecolor = :red,
+                 linestyle = :dash)
 ```
 
 For all practical intents and purposes (or just "ignoring random differences due
 to the stochastic nature of MCMC"), the two models yield identical predictions.
 
-I'll try fitting another Bayesian network, this one a bit more degenerate:
+I'll try fitting another Bayesian network, this one a bit more degenerate. I'll
+assume that the $X$ and $Z$ variables are independent, but that they both affect
+the $Y$ variable:
 
 ```{dot fig_bn_z-x-indep}
 //| fig-align: center
@@ -440,8 +448,8 @@ p_compare = StatsPlots.@df d_dag_bn #=
 
 StatsPlots.plot!(p_compare,
                  x -> x;
-                 linecolor = :red)
-
+                 linecolor = :red,
+                 linestyle = :dash)
 ```
 
 Much to my surprise, these two also make identical predictions!
