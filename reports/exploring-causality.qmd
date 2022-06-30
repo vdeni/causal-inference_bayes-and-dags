@@ -105,7 +105,7 @@ digraph effects_G {
 With that in mind, I'll simulate the data and put it in a data frame:
 
 ```{julia generate-data}
-Z_distr = Distributions.Normal(3, 1);
+Z_distr = Distributions.Normal(1, 1);
 
 N = 1000 # number of simulated draws
 
@@ -133,7 +133,7 @@ d = DataFrames.DataFrame("Y" => Y,
 d[1:10, :]
 ```
 
-Now, Pearl's DAG framework tells us that fitting a, in this case, linear model
+Pearl's DAG framework tells us that fitting a, in this case, linear model
 with $X$ as a predictor and $Y$ as criterion would give us a biased estimate of
 the causal effect of $X$ on $Y$ due to the backdoor path over $Z$
 ($X \textleftarrow Z \textrightarrow Y$). Therefore, fitting a linear regression
@@ -177,11 +177,19 @@ while simulating the data. The estimate of the effect of $Z$ on $Y$ is also in
 line with the value which we've coded up.
 
 Okay, now to the part that's a bit more tricky. I want to explore the
-relationships between Bayesian networks and Bayesian generative models. If my
-understanding is correct, a Bayesian generative model specified in line with the
-actual data generating mechanism should be able to provide unbiased estimates of
-causal effects. I'll try coding up the model represented by the DAG using
-`Turing.jl`.
+relationships between Bayesian networks and causal directed acyclic graphs.
+If my understanding is correct, a Bayesian network is, in a way, a subset of a
+causal directed acyclic graph --- it encodes the relationships between the
+variables under investigation, but doesn't make additional assumptions which are
+necessary for causal inference. However, a Bayesian network that corresponds to
+the true DAG should be able to provide us with unbiased estimates of the causal
+effects. A Bayesian network that does not correspond to the true DAG, on the
+other hand, should provide biased estimates of the causal effects, but should
+still be able to make accurate predictions. This may be a fine distinction, and
+is something I also aim to explore further down.
+
+I'll fit the model represented in Figure @fig-three-var-confounding-effs
+using the `Turing.jl` library. The model can be coded as follows:
 
 ```{julia model_three-var-simple-confound}
 Turing.@model function gen_model_y_xz(X,
@@ -198,18 +206,18 @@ Turing.@model function gen_model_y_xz(X,
     for i in eachindex(X)
         X[i] ~ Turing.Normal(Z[i] * b_XZ,
                              s)
- 
+
         Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
                              s)
     end
 end
 ```
 
-And sample from the model:
+Next, we tell `Turing` to sample using the NUTS sampler, which is the same one
+*Stan* uses:
 
 ```{julia sample_three-var-simple-confound}
 #| message: false
-#| cache: true
 
 chains = Turing.sample(gen_model_y_xz(d.X,
                                       d.Y,
@@ -222,9 +230,8 @@ chains = Turing.sample(gen_model_y_xz(d.X,
 ```
 
 Indeed, the parameters estimated in this way correspond to the ones we've
-simulated earlier. Now, this probably isn't that surprising, given that what
-we're doing is, basically, generating the data anew. Still, that *is*
-comforting, I guess.
+simulated earlier. Now, this probably isn't that surprising, given that our
+model is coded in line with the true DAG. Still, that *is* comforting, I guess.
 
 I'll try repeating the analysis using a distribution for the $Z$ variable which
 I know to be incorrect - the Cauchy distribution with location 3 and scale 1.
@@ -244,7 +251,7 @@ Turing.@model function gen_model_y_xz_cauchy(X,
     for i in eachindex(X)
         X[i] ~ Turing.Normal(Z[i] * b_XZ,
                              s)
- 
+
         Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
                              s)
     end
@@ -252,8 +259,6 @@ end
 ```
 
 ```{julia sample_three-var-simple-confound_cauchy}
-#| cache: true
-
 chains_cauchy = Turing.sample(gen_model_y_xz_cauchy(d.X,
                                                     d.Y,
                                                     d.Z),
@@ -266,14 +271,13 @@ chains_cauchy = Turing.sample(gen_model_y_xz_cauchy(d.X,
 
 Luckily, this also seems to work. So we can be somewhat off.
 
-What I want to wrap my head around next is the relationship between causal DAGs
-and Bayesian networks. If my understanding is correct, they should be pretty
-similar, with the main difference being that causal DAGs make certain
-assumptions regarding the data generating process, which allow us to make causal
-claims. However, if my understanding is correct, both causal DAGs and Bayesian
-networks should be able to make predictions of similar accuracy. That would mean
-that values $\hat{y}^{c-DAG}$ predicted from the causal DAG should be very
-similar to the values $\hat{y}^{BN}$ predicted by a Bayesian network.
+Now, let's examine a DAG we know to be false (a simple Bayesian network, I
+guess), and compare the predictions of a model that's coded in line with that
+DAG, with those of the model coded according to the true DAG. If my
+understanding is correct, both the causal DAG and the Bayesian network should be
+able to make predictions of similar accuracy. That would mean that values
+$\hat{y}^{c-DAG}$ predicted from the causal DAG should be very similar (or
+identical) to the values $\hat{y}^{BN}$ predicted by a Bayesian network.
 
 To check this claim, I'll try modeling the data according to the following
 graph, which we know to be false:
@@ -281,7 +285,7 @@ graph, which we know to be false:
 ```{dot fig_bn_x-confound}
 //| fig-align: center
 //| fig-cap: The obviously false DAG.
-//| label: fig_three-var-confounding-x-confound
+//| label: fig-three-var-confounding-x-confound
 
 digraph G {
     layout=dot;
@@ -307,7 +311,7 @@ Turing.@model function bn_model_y_xz(X,
     for i in eachindex(X)
         Z[i] ~ Turing.Normal(X[i] * b_ZX,
                              s)
- 
+
         Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
                              s)
     end
@@ -315,7 +319,6 @@ end
 ```
 
 ```{julia sample_bn_x-confound}
-#| cache: true
 
 chains_x_conf = Turing.sample(bn_model_y_xz(d.X,
                                             d.Y,
@@ -367,7 +370,7 @@ the $Y$ variable:
 ```{dot fig_bn_z-x-indep}
 //| fig-align: center
 //| fig-cap: Even worse DAG.
-//| label: fig-three-var-confounding
+//| label: fig-three-var-confounding-indep
 
 digraph G {
     layout=dot;
@@ -397,8 +400,6 @@ end
 ```
 
 ```{julia sample_bn_x-z-indep}
-#| cache: true
-
 chains_xz_indep = Turing.sample(bn_model_y_xz_indep(d.X,
                                                     d.Y,
                                                     d.Z),
@@ -509,3 +510,7 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
 
 compare_yhat(d_dag_bn)
 ```
+
+So, again, we seem to be getting the same predictions. I feel like this,
+actually, shouldn't be surprising --- all we did is fix the $X$ values to some
+concrete $x$, but everything else remained the same.
