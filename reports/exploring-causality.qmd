@@ -400,4 +400,35 @@ would do using Pearl's *do*-calculus, which assume knowledge of the causal
 [@pearlCausalInferenceStatistics2016] an intervention can be represented by a
 DAG from which all the arrows going into the intervened upon variable are
 removed. For example, here, we'll try predicting the effect of an intervention
-that would set the value of $X$ to some $x$.
+that would set the value of $X$ to some $x$. Under such an intervention, our two
+competing DAGs would look like this:
+
+```{dot fig_bn_x-confound}
+//| fig-align: center
+//| fig-cap: Causal DAGs when we simulate a $do(X = x)$ intervention. True DAG left, false DAG right.
+//| label: fig-simple-confounding-do-compare
+
+digraph G {
+    layout=dot;
+    subgraph dag_true {
+        rankdir=TB;
+        X1[label="X"];
+        Y1[label="Y"]
+        Z1[label="Z"]
+        X1 -> Y1[minlen=4];
+        Z1 -> X1[style="invisible", arrowhead="none"];
+        Z1 -> Y1;
+        {rank="same"; X1; Y1;}
+    }
+    subgraph dag_false {
+        rankdir=TB;
+        X2[label="X"];
+        Y2[label="Y"]
+        Z2[label="Z"]
+        X2 -> Y2;
+        X2 -> Z2;
+        Z2 -> Y2[minlen=4];
+        {rank="same"; Z2; Y2;}
+    }
+}
+```
