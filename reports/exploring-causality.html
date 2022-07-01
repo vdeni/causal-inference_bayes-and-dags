@@ -833,6 +833,36 @@ Z2-&gt;Y2
 </div>
 </div>
 </div>
+<p>So, we could ask, for example, what is the expected value of the <span class="math inline">\(Y\)</span> variable if we were to conduct an intervention that would set the value of <span class="math inline">\(X\)</span> to 6. We are interested in <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span>.</p>
+<p>Given that we know the equations of the true data generating process, we can calculate this. We know that each <span class="math inline">\(y\)</span> value is a draw from a normal distribution with location <span class="math inline">\(\mu_{y_i}\)</span> and scale <span class="math inline">\(1\)</span>. We further know that the value of <span class="math inline">\(\mu_{y_i}\)</span> is determined by the values which the variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span> take for a chosen <span class="math inline">\(i\)</span> (i.e.&nbsp;the values <span class="math inline">\(X = x_i\)</span> and <span class="math inline">\(Z = z_i\)</span>).</p>
+<p>Since we’ve made the intervention <span class="math inline">\(do(X = 6)\)</span>, we can just replace <span class="math inline">\(x_i\)</span> with <span class="math inline">\(6\)</span>. However, we cannot just disregard the <span class="math inline">\(Z\)</span> variable, given that it is not independent of <span class="math inline">\(Y\)</span>. Therefore, we will average over the <span class="math inline">\(Z\)</span> values.</p>
+<p>This was our starting model specification:</p>
+<p><span class="math display">\[\begin{align}
+    Z &amp;\sim \text{normal}(1, 1) \\
+    x_i &amp;\sim \text{normal}(\mu_{x_i}, 1) \\
+    y_i &amp;\sim \text{normal}(\mu_{y_i}, 1) \\
+    \mu_{x_i} &amp;= 3 z_i \\
+    \mu_{y_i} &amp;= 2 x_i + 4 z_i
+\end{align}\]</span></p>
+<p>We’ll replace the second line with a constant:</p>
+<p><span class="math display">\[\begin{align}
+    Z &amp;\sim \text{normal}(1, 1) \\
+    X &amp;= 6\; \text{for all}\; i\\
+    y_i &amp;\sim \text{normal}(\mu_{y_i}, 1) \\
+    \mu_{y_i} &amp;= 2 x_i + 4 z_i \\
+\end{align}\]</span></p>
+<p>We’ve said earlier that the expected value of <span class="math inline">\(Y\)</span> given some values of <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span> is equal to <span class="math inline">\(\mu_{y_i}\)</span>:</p>
+<p><span class="math display">\[\begin{equation}
+    \mu_{y_i} = \text{E}(Y | X, Z).
+\end{equation}\]</span></p>
+<p>Finally, given that we’ve set <span class="math inline">\(X = 6\)</span> through an intervention (and replaced <span class="math inline">\(x_i \sim \text{normal}(\mu_{x_i}, 1))\)</span> with a constant, we have:</p>
+<p><span class="math display">\[\begin{equation}
+    \text{E}(Y | X, Z) = 2 \times 6 + 4 z_i
+\end{equation}\]</span></p>
+<p>Finally, we average over the values of <span class="math inline">\(Z\)</span>:</p>
+<p><span class="math display">\[\begin{equation}
+    \text{E}(Y | X = 6) = \int_{z \in Z} 2 \times 6 + 4 z \, \mathrm{d}z.
+\end{equation}\]</span></p>
 
 </section>
 
