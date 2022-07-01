@@ -71,6 +71,7 @@ using GLM
 using DataFrames
 using Markdown
 using StatsPlots
+using QuadGK
 
 include(joinpath("..",
                  "helpers",
@@ -461,7 +462,7 @@ We'll replace the second line with a constant:
 
 \begin{align}
     Z &\sim \text{normal}(1, 1) \\
-    X &= 6\; \text{for all}\; i\\
+    x_i &= 6\; \text{for all}\; i\\
     y_i &\sim \text{normal}(\mu_{y_i}, 1) \\
     \mu_{y_i} &= 2 x_i + 4 z_i \\
 \end{align}
@@ -477,11 +478,51 @@ Finally, given that we've set $X = 6$ through an intervention (and replaced
 $x_i \sim \text{normal}(\mu_{x_i}, 1))$ with a constant, we have:
 
 \begin{equation}
-    \text{E}(Y | X, Z) = 2 \times 6 + 4 z_i
+    \text{E}(Y | X = 6, Z) = 2 \times 6 + 4 z_i
 \end{equation}
 
-Finally, we average over the values of $Z$:
+Finally, we want to average over the values of $Z$ to get $\text{E}(Y | X)$:
 
-\begin{equation}
-    \text{E}(Y | X = 6) = \int_{z \in Z} 2 \times 6 + 4 z \, \mathrm{d}z.
-\end{equation}
+\begin{align}
+    \text{E}(Y | X) &= \text{E}(\text{E}(Y | X, Z)) \\
+                    &= \int_{z \in Z}  \text{E}(Y | X = 6, Z = z) f_Z(z)\;
+                        \text{d}z \\
+                    &= \int_{z \in Z}(2 \times 6 + 4z)f_Z(z)\, \text{d}z.
+\end{align}
+
+We can use the `QuadGK.jl` package to calculate this expectation:
+
+```{julia}
+function integrand(z)
+    f_Z = Distributions.Normal(1, 1)
+    return (2 * 6 + 4 * z) * Distributions.pdf(f_Z, z)
+end
+
+QuadGK.quadgk(integrand,
+              -Inf,
+              Inf)
+```
+
+To confirm that our calculation is correct, we'll also simulate a new set of $Y$
+values, with $X = 6$ (we'll rely on some of the variables created in the first
+simulation, and we'll increase the number of simulated draws):
+
+```{julia}
+N = 200000
+
+x_i = 6
+
+Z = Random.rand(Z_distr,
+                N)
+
+# create Y values
+y_mu = 2 * x_i .+ 4 * Z
+
+Y_x = Distributions.Normal.(y_mu, 1)
+
+Y_x_fixed = Random.rand.(Y_x)
+
+mean(Y_x_fixed)
+```
+
+As we can see, we're getting the same result.
