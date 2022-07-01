@@ -4,6 +4,13 @@ author: Denis Vlašiček
 date: today
 execute:
     cache: true
+bibliography: references.bib
+highlight-style: gruvbox-dark
+format:
+    html:
+        toc: true
+        toc-location: left
+        theme: litera
 ---
 
 Lately, I've been reading quite a lot about causal inference in statistics and
@@ -34,10 +41,11 @@ variables. I'm talking about the case pictured below:
 
 digraph G {
     layout=dot;
-    rankdir=LR;
-    X -> Y;
+    rankdir=TB;
+    X -> Y[minlen=4];
     Z -> X;
     Z -> Y;
+    {rank="same"; X; Y;}
 }
 ```
 
@@ -95,10 +103,12 @@ the variables can be described by a simple linear model. Therefore, we have:
 
 digraph effects_G {
     layout=dot;
-    rankdir=LR;
-    X -> Y [label="b_yx = 2"];
+    bgcolor="transparent";
+    rankdir=TB;
+    X -> Y [label="b_yx = 2", minlen=4];
     Z -> X [label="b_xz = 3"];
     Z -> Y [label="b_yz = 4"];
+    {rank="same"; X; Y;}
 }
 ```
 
@@ -289,10 +299,11 @@ graph, which we know to be false:
 
 digraph G {
     layout=dot;
-    rankdir=LR;
+    rankdir=TB;
     X -> Y;
     X -> Z;
-    Z -> Y;
+    Z -> Y[minlen=4];
+    {rank="same"; Z; Y;}
 }
 ```
 
@@ -382,3 +393,11 @@ plot(p_dag_obs,
 Aside from seemingly being very good at predicting the $Y$ values, both models
 seem to make, for all practical intents and purposes (or just "ignoring random
 differences due to the stochastic nature of MCMC"), identical predictions.
+
+But what does this all mean for predicting the effects of interventions, as one
+would do using Pearl's *do*-calculus, which assume knowledge of the causal
+ mechanism? According to Pearl
+[@pearlCausalInferenceStatistics2016] an intervention can be represented by a
+DAG from which all the arrows going into the intervened upon variable are
+removed. For example, here, we'll try predicting the effect of an intervention
+that would set the value of $X$ to some $x$.
