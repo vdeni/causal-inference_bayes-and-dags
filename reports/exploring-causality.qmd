@@ -276,7 +276,7 @@ guess), and compare the predictions of a model that's coded in line with that
 DAG, with those of the model coded according to the true DAG. If my
 understanding is correct, both the causal DAG and the Bayesian network should be
 able to make predictions of similar accuracy. That would mean that values
-$\hat{y}^{c-DAG}$ predicted from the causal DAG should be very similar (or
+$\hat{y}^{cDAG}$ predicted from the causal DAG should be very similar (or
 identical) to the values $\hat{y}^{BN}$ predicted by a Bayesian network.
 
 To check this claim, I'll try modeling the data according to the following
@@ -332,8 +332,12 @@ chains_x_conf = Turing.sample(bn_model_y_xz(d.X,
 
 So, the coefficients for the effect of $X$ on $Y$ and $Z$ on $Y$ are actually
 quite fine. The coefficient for the effect of $X$ on $Z$ is, of course,
-gibberish. But how do the predicted $Y$ values from this model compare to the
-values predicted from the true DAG?
+gibberish, if interpreted causally. But how do the predicted $Y$ values from
+this model compare to the values predicted from the true DAG?
+
+Let's compare each of these models' $\hat{y}$ values to the observed $Y$ values,
+as well as the models' predictions to each other. I'll use only the mean
+estimates of the parameters, disregarding the uncertainty.
 
 ```{julia fig_compare_dag-bn-x-confound}
 pred_gen_model_y_xz = gen_model_y_xz(d.X,
@@ -355,162 +359,26 @@ y_hat_bn = Turing.predict(pred_bn_model_y_xz,
 d_dag_bn = DataFrames.DataFrame("Y_dag" =>
                                     MCMCChains.summarystats(y_hat_dag)[:, :mean],
                                 "Y_bn" =>
-                                    MCMCChains.summarystats(y_hat_bn)[:, :mean])
+                                    MCMCChains.summarystats(y_hat_bn)[:, :mean],
+                                "Y_obs" =>
+                                    Y)
 
-compare_yhat(d_dag_bn)
+p_dag_obs = compare_yhat(d_dag_bn;
+                         y_pred_1_name = "Y_dag",
+                         y_pred_2_name = "Y_obs")
+
+p_bn_obs = compare_yhat(d_dag_bn;
+                        y_pred_1_name = "Y_bn",
+                        y_pred_2_name = "Y_obs")
+
+p_dag_bn = compare_yhat(d_dag_bn)
+
+plot(p_dag_obs,
+     p_bn_obs,
+     p_dag_bn,
+     layout = (3, 1))
 ```
 
-For all practical intents and purposes (or just "ignoring random differences due
-to the stochastic nature of MCMC"), the two models yield identical predictions.
-
-I'll try fitting another Bayesian network, this one a bit more degenerate. I'll
-assume that the $X$ and $Z$ variables are independent, but that they both affect
-the $Y$ variable:
-
-```{dot fig_bn_z-x-indep}
-//| fig-align: center
-//| fig-cap: Even worse DAG.
-//| label: fig-three-var-confounding-indep
-
-digraph G {
-    layout=dot;
-    rankdir=LR;
-    X -> Y;
-    Z -> Y;
-}
-```
-
-```{julia model_bn_z-x-indep}
-Turing.@model function bn_model_y_xz_indep(X,
-                                           Y,
-                                           Z)
-    s ~ Turing.Exponential(1)
-
-    b_YX ~ Turing.Normal(2, 1)
-    b_YZ ~ Turing.Normal(2, 1)
-
-    X ~ Turing.Normal(2, 1)
-    Z ~ Turing.Normal(2, 1)
-
-    for i in eachindex(X)
-        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
-                             s)
-    end
-end
-```
-
-```{julia sample_bn_x-z-indep}
-chains_xz_indep = Turing.sample(bn_model_y_xz_indep(d.X,
-                                                    d.Y,
-                                                    d.Z),
-                                Turing.NUTS(1000,
-                                            0.80),
-                                Turing.MCMCThreads(),
-                                3000,
-                                4)
-```
-
-Interestingly, the estimated coefficients seem to correspond to the ones I've
-coded up. Again, let's compare the predictions:
-
-```{julia fig_compare_dag-bn-indep}
-pred_bn_model_y_xz_indep = bn_model_y_xz_indep(d.X,
-                                               fill(missing,
-                                                    N),
-                                               d.Z)
-
-y_hat_bn = Turing.predict(pred_bn_model_y_xz_indep,
-                          chains_xz_indep)
-
-d_dag_bn = DataFrames.DataFrame("Y_dag" =>
-                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
-                                "Y_bn" =>
-                                    MCMCChains.summarystats(y_hat_bn)[:, :mean])
-
-compare_yhat(d_dag_bn)
-```
-
-Much to my surprise, these two also make identical predictions! So, it would
-seem that Bayesian networks and generative models fit to causal DAGs *do* lead
-to the same predicted values. This may be especially important since the
-generative model was fit in accordance with the true data-generating process,
-while the Bayesian network was not.
-
-However, what further interests me is whether there's a difference between the
-two models' predictions when we simulate an intervention. That is, if we were to
-*set* $X$ equal to some value $x$, would our models predict the same $Y$ value?
-
-According to my understanding of causal DAGs, such an intervention would
-correspond to creating a mutilated graph, with all arrows pointing *into* the
-$X$ node being deleted. Therefore, we'd have the following two graphs:
-
-```{dot fig_mutilated-graphs_simple-confounding}
-//| fig-align: center
-//| fig-cap: Mutilated graphs for simple confounding with three variables.
-//| label: fig-mutil-graphs_simple-confounding
-
-digraph {
-    layout=dot;
-    rankdir="TB";
-
-    subgraph mutil_G_true {
-        X_1 [label="X = x"];
-        Z_1 [label="Z"];
-        Y_1 [label="Y"];
-
-        X_1 -> Y_1;
-        Z_1 -> Y_1;
-    }
-
-    subgraph mutil_G_false {
-        X_2 [label="X = x"];
-        Z_2 [label="Z"];
-        Y_2 [label="Y"];
-
-        X_2 -> Y_2;
-        Z_2 -> Y_2;
-    }
-}
-```
-
-So, in this case, we get the same graph. But do we get the same predictions?
-
-```{julia}
-#| echo: false
-
-Markdown.parse("""
-               Let's try setting \$X\$ to the mean of its observed values,
-               $(mean(d.X) |> round_2) and see what predictions we'll get.
-               """)
-```
-
-```{julia fig_compare_dag-bn-x-confound_mutilated}
-pred_gen_model_y_xz = gen_model_y_xz(fill(mean(d.X),
-                                          N),
-                                     fill(missing,
-                                          N),
-                                     d.Z)
-
-y_hat_dag = Turing.predict(pred_gen_model_y_xz,
-                           chains)
-
-pred_bn_model_y_xz_indep = bn_model_y_xz_indep(fill(mean(d.X),
-                                                    N),
-                                               fill(missing,
-                                                    N),
-                                               d.Z)
-
-y_hat_bn = Turing.predict(pred_bn_model_y_xz_indep,
-                          chains_xz_indep)
-
-d_dag_bn = DataFrames.DataFrame("Y_dag" =>
-                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
-                                "Y_bn" =>
-                                    MCMCChains.summarystats(y_hat_bn)[:, :mean])
-
-compare_yhat(d_dag_bn)
-```
-
-So, again, we seem to be getting the same predictions. I feel like this,
-actually, shouldn't be surprising --- all we did is fix the $X$ values to some
-concrete $x$, but everything else remained the same.
+Aside from seemingly being very good at predicting the $Y$ values, both models
+seem to make, for all practical intents and purposes (or just "ignoring random
+differences due to the stochastic nature of MCMC"), identical predictions.

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Denis Vlašiček">
-<meta name="dcterms.date" content="2022-06-30">
+<meta name="dcterms.date" content="2022-07-01">
 
 <title>Exploring causal inference with DAGs and Bayesian models</title>
 <style>
@@ -126,7 +126,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 30, 2022</p>
+      <p class="date">July 1, 2022</p>
     </div>
   </div>
     
@@ -211,19 +211,11 @@ Z-&gt;Y
 <div class="cell-output cell-output-stderr">
 <pre><code>  Activating project at `~/Documents/causal-inference_bayes-and-dags`</code></pre>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Info: Precompiling Turing [fce5fe82-541a-59a6-adf8-730c64b5f9a0]
-└ @ Base loading.jl:1423</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Info: Precompiling StatsPlots [f3b207a7-027a-5e70-b257-86293d7955fd]
-└ @ Base loading.jl:1423</code></pre>
-</div>
 <div class="cell-output cell-output-display" data-execution_count="2">
 <pre><code>TaskLocalRNG()</code></pre>
 </div>
 </div>
-<p>Now, let’s simulate data from the data generating process described in <a href="#fig-three-var-confounding">Figure&nbsp;3</a>. For simplicity, I’ll assume all variables are distributed normally with the same standard deviation <span class="math inline">\(\sigma = 1\)</span>, but with different means. Also for simplicity, I’ll assume that the relationships between the variables can be described by a simple linear model. Therefore, we have:</p>
+<p>Now, let’s simulate data from the data generating process described in <a href="#fig-three-var-confounding">Figure&nbsp;1</a>. For simplicity, I’ll assume all variables are distributed normally with the same standard deviation <span class="math inline">\(\sigma = 1\)</span>, but with different means. Also for simplicity, I’ll assume that the relationships between the variables can be described by a simple linear model. Therefore, we have:</p>
 <p><span class="math display">\[\begin{align}
     Z &amp;\sim \text{normal}(1, 1) \\
     x_i &amp;\sim \text{normal}(\mu_{x_i}, 1) \\
@@ -275,32 +267,32 @@ Z-&gt;Y
 </div>
 <p>With that in mind, I’ll simulate the data and put it in a data frame:</p>
 <div class="cell" data-execution_count="2">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>Z_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>);</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">1000</span> <span class="co"># number of simulated draws</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_distr,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                N)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># create X values</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>x_mu <span class="op">=</span> <span class="fl">3</span> <span class="op">*</span> Z</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>X_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(x_mu, <span class="fl">1</span>)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(X_distr)</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co"># create Y values</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>y_mu <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> X <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> Z</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>Y_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(y_mu, <span class="fl">1</span>)</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>Y <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_distr)</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y"</span> <span class="op">=&gt;</span> Y,</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"X"</span> <span class="op">=&gt;</span> X,</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Z"</span> <span class="op">=&gt;</span> Z)</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Z_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>);</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">1000</span> <span class="co"># number of simulated draws</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_distr,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                N)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># create X values</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>x_mu <span class="op">=</span> <span class="fl">3</span> <span class="op">*</span> Z</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>X_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(x_mu, <span class="fl">1</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(X_distr)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># create Y values</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>y_mu <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> X <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> Z</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>Y_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(y_mu, <span class="fl">1</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>Y <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_distr)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y"</span> <span class="op">=&gt;</span> Y,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"X"</span> <span class="op">=&gt;</span> X,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Z"</span> <span class="op">=&gt;</span> Z)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="3">
 
 <div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>10.5775</td><td>3.24194</td><td>0.929417</td></tr><tr><th>2</th><td>13.7239</td><td>4.29011</td><td>1.53148</td></tr><tr><th>3</th><td>-1.27323</td><td>-0.874445</td><td>0.193148</td></tr><tr><th>4</th><td>38.1601</td><td>11.2986</td><td>3.45699</td></tr><tr><th>5</th><td>16.9501</td><td>4.62647</td><td>2.16487</td></tr><tr><th>6</th><td>10.6161</td><td>3.45576</td><td>1.26756</td></tr><tr><th>7</th><td>26.2414</td><td>7.90164</td><td>2.74993</td></tr><tr><th>8</th><td>0.779545</td><td>-0.624594</td><td>0.173979</td></tr><tr><th>9</th><td>-2.50255</td><td>-1.42419</td><td>-0.0427524</td></tr><tr><th>10</th><td>6.94653</td><td>2.12588</td><td>0.670866</td></tr></tbody></table></div>
@@ -308,10 +300,10 @@ Z-&gt;Y
 </div>
 <p>Pearl’s DAG framework tells us that fitting a, in this case, linear model with <span class="math inline">\(X\)</span> as a predictor and <span class="math inline">\(Y\)</span> as criterion would give us a biased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> due to the backdoor path over <span class="math inline">\(Z\)</span> (<span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>). Therefore, fitting a linear regression model should give an estimate of the <span class="math inline">\(b\)</span> coefficient for <span class="math inline">\(X\)</span> different than <span class="math inline">\(2\)</span>, which was coded while creating the data.</p>
 <div class="cell" data-execution_count="3">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
@@ -329,10 +321,10 @@ X            3.17275    0.0153718  206.40    &lt;1e-99   3.14259    3.20292
 <p>As can be seen, we get <span class="math inline">\(X = 3.17\)</span>, which is different than the value set in the simulation.</p>
 <p>According to Pearl’s framework, we should also be able to get to the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> if we control for the confounder <span class="math inline">\(Z\)</span>. Therefore, let’s try fitting another model, this time including <span class="math inline">\(Z\)</span> as a variable in the regression model alongside <span class="math inline">\(X\)</span>.</p>
 <div class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X <span class="op">+</span> Z)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X <span class="op">+</span> Z)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
@@ -349,66 +341,55 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 </div>
 </div>
 <p>Now we get a <span class="math inline">\(b_{YX}\)</span> coefficient which corresponds to the one we’ve coded up while simulating the data. The estimate of the effect of <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> is also in line with the value which we’ve coded up.</p>
-<p>Okay, now to the part that’s a bit more tricky. I want to explore the relationships between Bayesian networks and Bayesian generative models. If my understanding is correct, a Bayesian generative model specified in line with the actual data generating mechanism should be able to provide unbiased estimates of causal effects. I’ll try coding up the model represented by the DAG using <code>Turing.jl</code>.</p>
+<p>Okay, now to the part that’s a bit more tricky. I want to explore the relationships between Bayesian networks and causal directed acyclic graphs. If my understanding is correct, a Bayesian network is, in a way, a subset of a causal directed acyclic graph — it encodes the relationships between the variables under investigation, but doesn’t make additional assumptions which are necessary for causal inference. However, a Bayesian network that corresponds to the true DAG should be able to provide us with unbiased estimates of the causal effects. A Bayesian network that does not correspond to the true DAG, on the other hand, should provide biased estimates of the causal effects, but should still be able to make accurate predictions. This may be a fine distinction, and is something I also aim to explore further down.</p>
+<p>I’ll fit the model represented in Figure <a href="#fig-three-var-confounding-effs">Figure&nbsp;2</a> using the <code>Turing.jl</code> library. The model can be coded as follows:</p>
 <div class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz</span>(X,</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                                      Y,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                                      Z)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, s)</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_XZ,</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz</span>(X,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                                      Y,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                                      Z)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, s)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_XZ,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>gen_model_y_xz (generic function with 2 methods)</code></pre>
 </div>
 </div>
-<p>And sample from the model:</p>
-<div class="cell" data-cache="true" data-execution_count="7">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>chains <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz</span>(d.X,</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                                      d.Y,</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                      d.Z),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                       Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                                   <span class="fl">0.80</span>),</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                       Turing.<span class="fu">MCMCThreads</span>(),</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">3000</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: Only a single thread available: MCMC chains are not sampled in parallel
-└ @ AbstractMCMC /home/denis/.julia/packages/AbstractMCMC/fnRmh/src/sample.jl:291</code></pre>
-</div>
+<p>Next, we tell <code>Turing</code> to sample using the NUTS sampler, which is the same one <em>Stan</em> uses:</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>chains <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz</span>(d.X,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                                      d.Y,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                                      d.Z),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                       Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                                   <span class="fl">0.80</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                       Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">3000</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>┌ Info: Found initial step size
 │   ϵ = 0.00625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
 │   ϵ = 0.0125
-└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Info: Found initial step size
+└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
+┌ Info: Found initial step size
 │   ϵ = 0.00625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
 │   ϵ = 0.00625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Sampling (1 threads):  50%|██████████████▌              |  ETA: 0:00:16</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Sampling (1 threads): 100%|█████████████████████████████| Time: 0:00:49</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <div class="ansi-escaped-output">
@@ -416,8 +397,8 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 96.54 seconds
-Compute duration  = 92.28 seconds
+Wall duration     = 46.67 seconds
+Compute duration  = 172.6 seconds
 parameters        = s, b_XZ, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -439,93 +420,80 @@ Quantiles
 </div>
 </div>
 </div>
-<p>Indeed, the parameters estimated in this way correspond to the ones we’ve simulated earlier. Now, this probably isn’t that surprising, given that what we’re doing is, basically, generating the data anew. Still, that <em>is</em> comforting, I guess.</p>
+<p>Indeed, the parameters estimated in this way correspond to the ones we’ve simulated earlier. Now, this probably isn’t that surprising, given that our model is coded in line with the true DAG. Still, that <em>is</em> comforting, I guess.</p>
 <p>I’ll try repeating the analysis using a distribution for the <span class="math inline">\(Z\)</span> variable which I know to be incorrect - the Cauchy distribution with location 3 and scale 1.</p>
 <div class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz_cauchy</span>(X,</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                                             Y,</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                                             Z)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Cauchy</span>(<span class="fl">3</span>, <span class="fl">1</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_XZ,</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz_cauchy</span>(X,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                                             Y,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                             Z)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Cauchy</span>(<span class="fl">3</span>, <span class="fl">1</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_XZ,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <pre><code>gen_model_y_xz_cauchy (generic function with 2 methods)</code></pre>
 </div>
 </div>
-<div class="cell" data-cache="true" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>chains_cauchy <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz_cauchy</span>(d.X,</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                                                    d.Y,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                                                    d.Z),</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="fl">0.80</span>),</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">MCMCThreads</span>(),</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">3000</span>,</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: Only a single thread available: MCMC chains are not sampled in parallel
-└ @ AbstractMCMC /home/denis/.julia/packages/AbstractMCMC/fnRmh/src/sample.jl:291</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Info: Found initial step size
-│   ϵ = 0.0015625
-└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
-</div>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>chains_cauchy <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz_cauchy</span>(d.X,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                                                    d.Y,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                                                    d.Z),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="fl">0.80</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">3000</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>┌ Info: Found initial step size
 │   ϵ = 0.00625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-Sampling (1 threads):  50%|██████████████▌              |  ETA: 0:00:13┌ Info: Found initial step size
-│   ϵ = 0.003125
-└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
 ┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47</code></pre>
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Info: Found initial step size
+│   ϵ = 0.003125
+└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
+┌ Info: Found initial step size
+│   ϵ = 0.0015625
+└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>┌ Info: Found initial step size
 │   ϵ = 0.0015625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Sampling (1 threads): 100%|█████████████████████████████| Time: 0:00:40</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="10">
 <div class="ansi-escaped-output">
@@ -533,8 +501,8 @@ Sampling (1 threads):  50%|██████████████▌        
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 62.79 seconds
-Compute duration  = 62.08 seconds
+Wall duration     = 30.36 seconds
+Compute duration  = 91.17 seconds
 parameters        = s, b_XZ, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -557,11 +525,12 @@ Quantiles
 </div>
 </div>
 <p>Luckily, this also seems to work. So we can be somewhat off.</p>
-<p>What I want to wrap my head around next is the relationship between causal DAGs and Bayesian networks. If my understanding is correct, they should be pretty similar, with the main difference being that causal DAGs make certain assumptions regarding the data generating process, which allow us to make causal claims. However, if my understanding is correct, both causal DAGs and Bayesian networks should be able to make predictions of similar accuracy. That would mean that values <span class="math inline">\(\hat{y}^{c-DAG}\)</span> predicted from the causal DAG should be very similar to the values <span class="math inline">\(\hat{y}^{BN}\)</span> predicted by a Bayesian network.</p>
+<p>Now, let’s examine a DAG we know to be false (a simple Bayesian network, I guess), and compare the predictions of a model that’s coded in line with that DAG, with those of the model coded according to the true DAG. If my understanding is correct, both the causal DAG and the Bayesian network should be able to make predictions of similar accuracy. That would mean that values <span class="math inline">\(\hat{y}^{cDAG}\)</span> predicted from the causal DAG should be very similar (or identical) to the values <span class="math inline">\(\hat{y}^{BN}\)</span> predicted by a Bayesian network.</p>
 <p>To check this claim, I’ll try modeling the data according to the following graph, which we know to be false:</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig_three-var-confounding-x-confound">
+<div id="fig-three-var-confounding-x-confound" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
 <p>
 <svg width="242pt" height="67pt" viewbox="0.00 0.00 242.00 67.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 63)">
@@ -595,47 +564,44 @@ Z-&gt;Y
 <path fill="none" stroke="black" d="M142.51,-24.41C151.57,-26.77 162.01,-29.5 171.78,-32.05"></path> <polygon fill="black" stroke="black" points="171.06,-35.49 181.62,-34.63 172.83,-28.71 171.06,-35.49"></polygon> </g> </g>
 </svg>
 </p>
-<p>The obviously false DAG.</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 3: The obviously false DAG.</figcaption><p></p>
+</figure>
 </div>
 </div>
 </div>
 <div class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">bn_model_y_xz</span>(X,</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                                     Y,</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                                     Z)</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    b_ZX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>        Z[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_ZX,</span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
-<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">bn_model_y_xz</span>(X,</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                                     Y,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                                     Z)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    b_ZX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>        Z[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_ZX,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>bn_model_y_xz (generic function with 2 methods)</code></pre>
 </div>
 </div>
-<div class="cell" data-cache="true" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>chains_x_conf <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">bn_model_y_xz</span>(d.X,</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>                                            d.Y,</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>                                            d.Z),</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="fl">0.80</span>),</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">MCMCThreads</span>(),</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">3000</span>,</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: Only a single thread available: MCMC chains are not sampled in parallel
-└ @ AbstractMCMC /home/denis/.julia/packages/AbstractMCMC/fnRmh/src/sample.jl:291</code></pre>
-</div>
+<div class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>chains_x_conf <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">bn_model_y_xz</span>(d.X,</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>                                            d.Y,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                                            d.Z),</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="fl">0.80</span>),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">3000</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
@@ -646,49 +612,47 @@ Z-&gt;Y
 ┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Info: Found initial step size
+│   ϵ = 0.00625
+└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
 │   ϵ = 0.0015625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
 ┌ Info: Found initial step size
 │   ϵ = 0.00078125
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
-│   ϵ = 0.00625
-└ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-Sampling (1 threads):  50%|██████████████▌              |  ETA: 0:00:12</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Info: Found initial step size
 │   ϵ = 0.0015625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Sampling (1 threads): 100%|█████████████████████████████| Time: 0:00:37</code></pre>
+<pre><code>Sampling (4 threads):  75%|█████████████████████▊       |  ETA: 0:00:03</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Sampling (4 threads): 100%|█████████████████████████████| Time: 0:00:10</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="12">
 <div class="ansi-escaped-output">
@@ -696,8 +660,8 @@ Sampling (1 threads):  50%|██████████████▌        
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 60.16 seconds
-Compute duration  = 59.44 seconds
+Wall duration     = 29.19 seconds
+Compute duration  = 94.52 seconds
 parameters        = s, b_ZX, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -719,43 +683,55 @@ Quantiles
 </div>
 </div>
 </div>
-<p>So, the coefficients for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> and <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> are actually quite fine. The coefficient for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Z\)</span> is, of course, gibberish. But how do the predicted <span class="math inline">\(Y\)</span> values from this model compare to the values predicted from the true DAG?</p>
+<p>So, the coefficients for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> and <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> are actually quite fine. The coefficient for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Z\)</span> is, of course, gibberish, if interpreted causally. But how do the predicted <span class="math inline">\(Y\)</span> values from this model compare to the values predicted from the true DAG?</p>
+<p>Let’s compare each of these models’ <span class="math inline">\(\hat{y}\)</span> values to the observed <span class="math inline">\(Y\)</span> values, as well as the models’ predictions to each other. I’ll use only the mean estimates of the parameters, disregarding the uncertainty.</p>
 <div class="cell" data-execution_count="12">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(d.X,</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz <span class="op">=</span> <span class="fu">bn_model_y_xz</span>(d.X,</span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>                                   d.Z)</span>
-<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz,</span>
-<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>                          chains_x_conf)</span>
-<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
-<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
-<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
-<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean])</span>
-<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Info: Precompiling GR_jll [d2c73de3-f751-5644-a686-071e5b155ba9]
-└ @ Base loading.jl:1423</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(d.X,</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz <span class="op">=</span> <span class="fu">bn_model_y_xz</span>(d.X,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>                                   d.Z)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz,</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>                          chains_x_conf)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_obs"</span> <span class="op">=&gt;</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>                                    Y)</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>p_dag_obs <span class="op">=</span> <span class="fu">compare_yhat</span>(d_dag_bn;</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>                         y_pred_1_name <span class="op">=</span> <span class="st">"Y_dag"</span>,</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>                         y_pred_2_name <span class="op">=</span> <span class="st">"Y_obs"</span>)</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>p_bn_obs <span class="op">=</span> <span class="fu">compare_yhat</span>(d_dag_bn;</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>                        y_pred_1_name <span class="op">=</span> <span class="st">"Y_bn"</span>,</span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>                        y_pred_2_name <span class="op">=</span> <span class="st">"Y_obs"</span>)</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>p_dag_bn <span class="op">=</span> <span class="fu">compare_yhat</span>(d_dag_bn)</span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(p_dag_obs,</span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>     p_bn_obs,</span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a>     p_dag_bn,</span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a>     layout <span class="op">=</span> (<span class="fl">3</span>, <span class="fl">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="13">
-<p><img src="exploring-causality_files/figure-html/cell-13-output-2.svg" class="img-fluid"></p>
+<p><img src="exploring-causality_files/figure-html/cell-13-output-1.svg" class="img-fluid"></p>
 </div>
 </div>
-<p>For all practical intents and purposes (or just “ignoring random differences due to the stochastic nature of MCMC”), the two models yield identical predictions.</p>
+<p>Aside from seemingly being very good at predicting the <span class="math inline">\(Y\)</span> values, both models seem to make, for all practical intents and purposes (or just “ignoring random differences due to the stochastic nature of MCMC”), identical predictions.</p>
 <p>I’ll try fitting another Bayesian network, this one a bit more degenerate. I’ll assume that the <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span> variables are independent, but that they both affect the <span class="math inline">\(Y\)</span> variable:</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="fig-three-var-confounding" class="quarto-figure quarto-figure-center anchored">
+<div id="fig-three-var-confounding-indep" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p>
 <svg width="152pt" height="98pt" viewbox="0.00 0.00 152.00 98.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
@@ -786,80 +762,72 @@ Z-&gt;Y
 <path fill="none" stroke="black" d="M52.05,-25.38C61.44,-28.26 72.36,-31.61 82.5,-34.72"></path> <polygon fill="black" stroke="black" points="81.7,-38.14 92.29,-37.72 83.75,-31.45 81.7,-38.14"></polygon> </g> </g>
 </svg>
 </p>
-<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 3: Even worse DAG.</figcaption><p></p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 4: Even worse DAG.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
 <div class="cell" data-execution_count="13">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">bn_model_y_xz_indep</span>(X,</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>                                           Y,</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>                                           Z)</span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
-<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
-<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
-<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
-<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">bn_model_y_xz_indep</span>(X,</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                                           Y,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                                           Z)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    s <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    b_YX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    b_YZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_YX <span class="op">+</span> Z[i] <span class="op">*</span> b_YZ,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>                             s)</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="14">
 <pre><code>bn_model_y_xz_indep (generic function with 2 methods)</code></pre>
 </div>
 </div>
-<div class="cell" data-cache="true" data-execution_count="14">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>chains_xz_indep <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">bn_model_y_xz_indep</span>(d.X,</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>                                                    d.Y,</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>                                                    d.Z),</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>                                Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>                                            <span class="fl">0.80</span>),</span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>                                Turing.<span class="fu">MCMCThreads</span>(),</span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>                                <span class="fl">3000</span>,</span>
-<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>                                <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: Only a single thread available: MCMC chains are not sampled in parallel
-└ @ AbstractMCMC /home/denis/.julia/packages/AbstractMCMC/fnRmh/src/sample.jl:291</code></pre>
-</div>
+<div class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>chains_xz_indep <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">bn_model_y_xz_indep</span>(d.X,</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>                                                    d.Y,</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>                                                    d.Z),</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>                                Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>                                            <span class="fl">0.80</span>),</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>                                Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>                                <span class="fl">3000</span>,</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>                                <span class="fl">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
 ┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
 ┌ Info: Found initial step size
-│   ϵ = 0.003125
+│   ϵ = 0.025
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
-│   ϵ = 0.0125
+│   ϵ = 0.003125
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>┌ Info: Found initial step size
-│   ϵ = 0.025
+<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
+│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
+└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
+┌ Info: Found initial step size
+│   ϵ = 0.0125
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Sampling (1 threads):  50%|██████████████▌              |  ETA: 0:00:04┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
-┌ Warning: The current proposal will be rejected due to numerical error(s).
-│   isfinite.((θ, r, ℓπ, ℓκ)) = (true, false, false, false)
-└ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>┌ Warning: The current proposal will be rejected due to numerical error(s).
 │   isfinite.((θ, r, ℓπ, ℓκ)) = (true, true, true, false)
 └ @ AdvancedHMC /home/denis/.julia/packages/AdvancedHMC/51xgc/src/hamiltonian.jl:47
 ┌ Info: Found initial step size
@@ -867,7 +835,10 @@ Z-&gt;Y
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Sampling (1 threads): 100%|█████████████████████████████| Time: 0:00:13</code></pre>
+<pre><code>Sampling (4 threads):  75%|█████████████████████▊       |  ETA: 0:00:02</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Sampling (4 threads): 100%|█████████████████████████████| Time: 0:00:07</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="15">
 <div class="ansi-escaped-output">
@@ -875,8 +846,8 @@ Z-&gt;Y
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 24.72 seconds
-Compute duration  = 24.23 seconds
+Wall duration     = 27.6 seconds
+Compute duration  = 92.31 seconds
 parameters        = s, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -898,20 +869,20 @@ Quantiles
 </div>
 <p>Interestingly, the estimated coefficients seem to correspond to the ones I’ve coded up. Again, let’s compare the predictions:</p>
 <div class="cell" data-execution_count="15">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz_indep <span class="op">=</span> <span class="fu">bn_model_y_xz_indep</span>(d.X,</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>                                               <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>                                                    N),</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>                                               d.Z)</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz_indep,</span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>                          chains_xz_indep)</span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
-<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
-<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
-<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean])</span>
-<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz_indep <span class="op">=</span> <span class="fu">bn_model_y_xz_indep</span>(d.X,</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>                                               <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>                                                    N),</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                                               d.Z)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz_indep,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>                          chains_xz_indep)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean])</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <p><img src="exploring-causality_files/figure-html/cell-16-output-1.svg" class="img-fluid"></p>
 </div>
@@ -968,7 +939,7 @@ Z_2-&gt;Y_2
 <path fill="none" stroke="black" d="M258.07,-72.76C253.29,-64.19 247.33,-53.49 241.99,-43.9"></path> <polygon fill="black" stroke="black" points="245.03,-42.18 237.11,-35.15 238.92,-45.59 245.03,-42.18"></polygon> </g> </g>
 </svg>
 </p>
-<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 4: Mutilated graphs for simple confounding with three variables.</figcaption><p></p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 5: Mutilated graphs for simple confounding with three variables.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -976,30 +947,30 @@ Z_2-&gt;Y_2
 <p>So, in this case, we get the same graph. But do we get the same predictions?</p>
 <p>Let’s try setting <span class="math inline">\(X\)</span> to the mean of its observed values, 3.08 and see what predictions we’ll get.</p>
 <div class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(<span class="fu">fill</span>(<span class="fu">mean</span>(d.X),</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz_indep <span class="op">=</span> <span class="fu">bn_model_y_xz_indep</span>(<span class="fu">fill</span>(<span class="fu">mean</span>(d.X),</span>
-<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>                                                    N),</span>
-<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>                                               <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>                                                    N),</span>
-<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>                                               d.Z)</span>
-<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz_indep,</span>
-<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>                          chains_xz_indep)</span>
-<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
-<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
-<span id="cb50-21"><a href="#cb50-21" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
-<span id="cb50-22"><a href="#cb50-22" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean])</span>
-<span id="cb50-23"><a href="#cb50-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-24"><a href="#cb50-24" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(<span class="fu">fill</span>(<span class="fu">mean</span>(d.X),</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz_indep <span class="op">=</span> <span class="fu">bn_model_y_xz_indep</span>(<span class="fu">fill</span>(<span class="fu">mean</span>(d.X),</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>                                                    N),</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>                                               <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>                                                    N),</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>                                               d.Z)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz_indep,</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>                          chains_xz_indep)</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean])</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <p><img src="exploring-causality_files/figure-html/cell-18-output-1.svg" class="img-fluid"></p>
 </div>
