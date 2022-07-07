@@ -623,19 +623,19 @@ mean(b_yx * 6 .+ b_yz * Z_prime)
 ```
 
 Alternatively, if we rearrange the previous equation, we'll notice that we're
-really working with the expected value of the $Z$ variable:
+really working with the expected value of the $Z'$ variable:
 
 \begin{align}
-    \text{E}(Y | X = 6, Z) &= \frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 +
+    \text{E}(Y | X = 6, Z') &= \frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 +
         \beta_{YZ} \times z'_i) \\
     &= \beta_{YX} \times 6 + \beta_{YZ} \times
-        \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z)}}.
+        \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z')}}.
 \end{align}
 
 According to our model, that is:
 
 $$
-    \text{E}(Z) = \mu_{z_i} = \beta_ZX \times x_i,\; \text{where}\;
+    \text{E}(Z') = \mu_{z'_i} = \beta_ZX \times x_i,\; \text{where}\;
         x_i = 6\; \forall\, i
 $$
 
@@ -643,11 +643,62 @@ meaning that we can also estimate the total causal effect of $do(X = x)$ on
 $Y$ like this:
 
 ```{julia}
-#                   E(Z)
+#                   E(Z')
 b_yx * 6 + b_yz * (b_zx * 6)
 ```
 
 Here, we get an estimate of the total causal effect of $X$ on $Y$ that's clearly
 biased upwards.
 
+```{julia fig_compare_dag-bn-x-confound_intervention}
+pred_gen_model_y_xz = gen_model_y_xz(fill(6,
+                                          N),
+                                     fill(missing,
+                                          N),
+                                     d.Z)
+
+y_hat_dag = Turing.predict(pred_gen_model_y_xz,
+                           chains)
+
+pred_bn_model_y_xz = bn_model_y_xz(fill(6,
+                                        N),
+                                   fill(missing,
+                                        N),
+                                   fill(missing,
+                                        N))
+
+y_hat_bn = Turing.predict(pred_bn_model_y_xz,
+                          chains_x_conf)
+
+
+y_hat_bn_summary = MCMCChains.summarystats(y_hat_bn) |>
+    DataFrames.DataFrame
+
+y_hat_bn_summary = transform(y_hat_bn_summary,
+                             :parameters => x -> String.(x);
+                             copycols=false,
+                             renamecols=false)
+
+y_hat_bn_summary = subset(y_hat_bn_summary,
+                          :parameters => x -> contains.(x, r"^Y"))
+
+d_dag_bn = DataFrames.DataFrame("Y_dag" =>
+                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
+                                "Y_bn" => y_hat_bn_summary[:, :mean])
+
+compare_yhat(d_dag_bn)
+
+DataFrames.combine(d_dag_bn,
+                   DataFrames.All() .=> mean)
+```
+
+Here's something interesting. While the model corresponding to the true DAG
+makes variable predictions (whose mean matches the expectation we've calculated
+earlier), the wrong model predicts values to be in a very narrow range (and
+which also have an overestimated expected value, also as calculated earlier).
+[^disclaimer_compare]
+
 [^counterfactuals]: Hello, counterfactuals!
+[^disclaimer_compare]: I do have to put a disclaimer --- since I'm really new
+to both Julia and `Turing.jl`, it could easily be the case that I've coded
+something model incorrectly.
