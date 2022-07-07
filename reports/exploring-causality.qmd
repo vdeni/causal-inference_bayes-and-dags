@@ -401,8 +401,8 @@ would do using Pearl's *do*-calculus, which assume knowledge of the causal
 [@pearlCausalInferenceStatistics2016] an intervention can be represented by a
 DAG from which all the arrows going into the intervened upon variable are
 removed. For example, here, we'll try predicting the effect of an intervention
-that would set the value of $X$ to some $x$. Under such an intervention, our two
-competing DAGs would look like this:
+that would set the value of $X$ to some $x$, denoted $do(X = x)$.
+Under such an intervention, our two competing DAGs would look like this:
 
 ```{dot fig_bn_x-confound}
 //| fig-align: center
@@ -436,7 +436,7 @@ digraph G {
 
 So, we could ask, for example, what is the expected value of the $Y$ variable if
 we were to conduct an intervention that would set the value of $X$ to 6. We are
-interested in $\text{E}(Y | do(X = 6), Z)$.
+interested in $\text{E}(Y | do(X = 6))$.
 
 Given that we know the equations of the true data generating process, we can
 calculate this. We know that each $y$ value is a draw from a normal distribution
@@ -474,8 +474,8 @@ $Z$ is equal to $\mu_{y_i}$:
     \mu_{y_i} = \text{E}(Y | X, Z).
 \end{equation}
 
-Finally, given that we've set $X = 6$ through an intervention (and replaced
-$x_i \sim \text{normal}(\mu_{x_i}, 1))$ with a constant, we have:
+Finally, given that we've set $X = 6$ through an intervention (and thus replaced
+$x_i \sim \text{normal}(\mu_{x_i}, 1)$ with a constant), we have:
 
 \begin{equation}
     \text{E}(Y | X = 6, Z) = 2 \times 6 + 4 z_i
@@ -526,11 +526,84 @@ mean(Y_x_fixed)
 ```
 
 As we can see, we're getting a very similar result. This gives us additional
-confidence that our calculation was correct. Now, let's check how our models
-fare. Again, we'd expect that the true model will predict the values correctly,
-but that the incorrect one will not.
+confidence that our calculation was correct.
+
+Now, what's the deal with the two models --- how do we obtain $\text{E}(Y | do(X
+= 6), Z)$? Let's first look at the model corresponding to the true
+data-generating process. According to @pearlCausalInferenceStatistics2016, to
+estimate the causal effect an intervention on $X$ ($do(X = 6)$) would have on
+$Y$, we have to adjust for $X$'s parent variable $Z$.
+We do that the same way as when we were calculating the true expected value:
+
+\begin{align}
+    \text{E}(Y | do(X = 6), Z) &= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
+        \text{d}z \\
+    \text{E}(Y | do(X = 6), Z) &= \int_{z \in Z}(\beta_{YX} \times 6 +
+        \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
+\end{align}
+
+```{julia}
+#| echo: false
+Markdown.parse("""Let's take the posterior means of the parameter estimates
+               for \$\\beta_{YX}\$ and \$\\beta_{YZ}\$, that is
+               \$\\beta_{YX} =
+               $(MCMCChains.summarystats(chains)[3, :mean] |> round_2)\$
+               and \$\\beta_{YZ} =
+               $(MCMCChains.summarystats(chains)[4, :mean] |> round_2)\$""")
+```
+
+```{julia}
+b_yx = MCMCChains.summarystats(chains)[3, :mean]
+b_yz = MCMCChains.summarystats(chains)[4, :mean]
+
+function integrand(z)
+    f_Z = Distributions.Normal(1, 1)
+    return (b_yx * 6 + b_yz * z) * Distributions.pdf(f_Z, z)
+end
+
+QuadGK.quadgk(integrand,
+              -Inf,
+              Inf)
+```
+
+```{julia}
+1 / N *  sum(b_yx * 6 .+ b_yz * Z)
+```
+
+The results align perfectly with the one obtained from the true model, which
+could have been expected, given that we've estimated both $\beta_{YX}$ and
+$\beta_{YZ}$ correctly. So we basically just reran the previous calculation.
+
+Now for the second model. As we've mentioned earlier, no arrows get deleted
+in this model, as there are no arrows entering $X$. To obtain
+$\text{E}(Y | do(X = 6), Z)$, we have
+
+\begin{align}
+    \text{E}(Y | do(X = 6), Z) &= \text{E}(Y | X = 6, Z) \\
+        &= (\beta_{YX} \times 6 + \beta_{YZ} \times Z),\; \text{where} \\
+        Z &= f(X = 6) = \text{normal}(\beta_{ZX} \times 6, 1).
+\end{align}
+
+According to Pearl's framework, as the $X$ variable has no parents,
+there's no need to adjust for anything if we want to obtain the total causal
+effect of $X$ on $Y$. Therefore, for $\text{E}(Y | do(X = 6), Z)$ we have:
+
+```{julia}
+b_zx = MCMCChains.summarystats(chains_x_conf)[2, :mean]
+b_yx = MCMCChains.summarystats(chains_x_conf)[3, :mean]
+b_yz = MCMCChains.summarystats(chains_x_conf)[4, :mean]
+
+Z_distr_do = Distributions.Normal(b_zx * 6, 1)
+
+Z_do = Random.rand(Z_distr_do,
+                   1000)
+
+mean(b_yx * 6 .+ b_yz * Z_do)
+```
 
 ```{julia fig_compare_dag-bn-x-confound_intervention}
+#| eval: false
+
 pred_gen_model_y_xz = gen_model_y_xz(fill(6,
                                           N),
                                      fill(missing,
@@ -554,7 +627,7 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
                                 "Y_bn" =>
                                     MCMCChains.summarystats(y_hat_bn)[:, :mean])
 
-compare_yhat(d_dag_bn)
+compare_yhat(d_dag_bn) |> display
 
 DataFrames.combine(d_dag_bn,
                    DataFrames.All() .=> mean)
@@ -562,5 +635,3 @@ DataFrames.combine(d_dag_bn,
 
 However, the models still provide the same, and (at least approximately)
 correct, predictions!
-
-TODO: novi modeli u skladu s DAG i X = 6
