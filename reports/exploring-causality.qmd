@@ -493,12 +493,12 @@ Finally, we want to average over the values of $Z$ to get $\text{E}(Y | X)$:
 We can use the `QuadGK.jl` package to calculate this expectation:
 
 ```{julia}
-function integrand(z)
+function integral(z)
     f_Z = Distributions.Normal(1, 1)
     return (2 * 6 + 4 * z) * Distributions.pdf(f_Z, z)
 end
 
-QuadGK.quadgk(integrand,
+QuadGK.quadgk(integral,
               -Inf,
               Inf)
 ```
@@ -512,11 +512,11 @@ N_sim = 100000
 
 x_i = 6
 
-Z = Random.rand(Z_distr,
-                N_sim)
+Z_prime = Random.rand(Z_distr,
+                      N_sim)
 
 # create Y values
-y_mu = 2 * x_i .+ 4 * Z
+y_mu = 2 * x_i .+ 4 * Z_prime
 
 Y_x = Distributions.Normal.(y_mu, 1)
 
@@ -556,18 +556,21 @@ Markdown.parse("""Let's take the posterior means of the parameter estimates
 b_yx = MCMCChains.summarystats(chains)[3, :mean]
 b_yz = MCMCChains.summarystats(chains)[4, :mean]
 
-function integrand(z)
+function integral(z)
     f_Z = Distributions.Normal(1, 1)
     return (b_yx * 6 + b_yz * z) * Distributions.pdf(f_Z, z)
 end
 
-QuadGK.quadgk(integrand,
+QuadGK.quadgk(integral,
               -Inf,
               Inf)
 ```
 
+Alternatively, instead of relying the fact the we know the distribution of $Z$,
+we could do:
+
 ```{julia}
-1 / N *  sum(b_yx * 6 .+ b_yz * Z)
+1 / N * sum(b_yx * 6 .+ b_yz * Z)
 ```
 
 The results align perfectly with the one obtained from the true model, which
@@ -575,63 +578,76 @@ could have been expected, given that we've estimated both $\beta_{YX}$ and
 $\beta_{YZ}$ correctly. So we basically just reran the previous calculation.
 
 Now for the second model. As we've mentioned earlier, no arrows get deleted
-in this model, as there are no arrows entering $X$. To obtain
-$\text{E}(Y | do(X = 6), Z)$, we have
+in this model, as there are no arrows entering $X$. This also means that we
+won't be adjusting for $Z$ in this case (i.e. we won't be integrating over the
+$z$ values). To obtain $\text{E}(Y | do(X = 6), Z)$, we have
 
 \begin{align}
     \text{E}(Y | do(X = 6), Z) &= \text{E}(Y | X = 6, Z) \\
-        &= (\beta_{YX} \times 6 + \beta_{YZ} \times Z),\; \text{where} \\
-        Z &= f(X = 6) = \text{normal}(\beta_{ZX} \times 6, 1).
+        &= \beta_{YX} \times 6 + \beta_{YZ} \times Z.
 \end{align}
 
-According to Pearl's framework, as the $X$ variable has no parents,
-there's no need to adjust for anything if we want to obtain the total causal
-effect of $X$ on $Y$. Therefore, for $\text{E}(Y | do(X = 6), Z)$ we have:
+However, we have to be mindful of one thing: according to our model, $Z$ is
+under the direct influence of $X$. Therefore, if $X$ is set to some value $x$
+through an intervention, $Z$ also changes. We have to keep that in mind if we
+want to get an estimate of the total causal effect $X$ has on $Y$ --- both the
+direct effect, and the indirect effect going through $Z$. So we'll modify the
+previous equation, and mark the new variable as $Z'$, keeping in mind that it
+represents the values that the $Z$ variable would obtain if the $X$ values
+were set to some $x$ (in our case, 6)[^counterfactuals].
+
+\begin{align}
+    \text{E}(Y | do(X = 6), Z') &= \text{E}(Y | X = 6, Z') \\
+        &= \beta_{YX} \times 6 + \beta_{YZ} \times Z'.
+\end{align}
+
+We also have to keep in mind that $Z'$ is a variable. So, to finally obtain the
+estimate of $\text{E}(Y | do(X = 6), Z)$ we can simulate a set of $Z'$ values
+and calculate
+
+$$
+\frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 + \beta_{YZ} \times z'_i)
+$$
 
 ```{julia}
 b_zx = MCMCChains.summarystats(chains_x_conf)[2, :mean]
 b_yx = MCMCChains.summarystats(chains_x_conf)[3, :mean]
 b_yz = MCMCChains.summarystats(chains_x_conf)[4, :mean]
 
-Z_distr_do = Distributions.Normal(b_zx * 6, 1)
+Z_prime_distr = Distributions.Normal(b_zx * 6, 1)
 
-Z_do = Random.rand(Z_distr_do,
-                   1000)
+Z_prime = Random.rand(Z_prime_distr,
+                      10_000)
 
-mean(b_yx * 6 .+ b_yz * Z_do)
+mean(b_yx * 6 .+ b_yz * Z_prime)
 ```
 
-```{julia fig_compare_dag-bn-x-confound_intervention}
-#| eval: false
+Alternatively, if we rearrange the previous equation, we'll notice that we're
+really working with the expected value of the $Z$ variable:
 
-pred_gen_model_y_xz = gen_model_y_xz(fill(6,
-                                          N),
-                                     fill(missing,
-                                          N),
-                                     d.Z)
+\begin{align}
+    \text{E}(Y | X = 6, Z) &= \frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 +
+        \beta_{YZ} \times z'_i) \\
+    &= \beta_{YX} \times 6 + \beta_{YZ} \times
+        \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z)}}.
+\end{align}
 
-y_hat_dag = Turing.predict(pred_gen_model_y_xz,
-                           chains)
+According to our model, that is:
 
-pred_bn_model_y_xz = bn_model_y_xz(fill(6,
-                                        N),
-                                   fill(missing,
-                                        N),
-                                   d.Z)
+$$
+    \text{E}(Z) = \mu_{z_i} = \beta_ZX \times x_i,\; \text{where}\;
+        x_i = 6\; \forall\, i
+$$
 
-y_hat_bn = Turing.predict(pred_bn_model_y_xz,
-                          chains_x_conf)
+meaning that we can also estimate the total causal effect of $do(X = x)$ on
+$Y$ like this:
 
-d_dag_bn = DataFrames.DataFrame("Y_dag" =>
-                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
-                                "Y_bn" =>
-                                    MCMCChains.summarystats(y_hat_bn)[:, :mean])
-
-compare_yhat(d_dag_bn) |> display
-
-DataFrames.combine(d_dag_bn,
-                   DataFrames.All() .=> mean)
+```{julia}
+#                   E(Z)
+b_yx * 6 + b_yz * (b_zx * 6)
 ```
 
-However, the models still provide the same, and (at least approximately)
-correct, predictions!
+Here, we get an estimate of the total causal effect of $X$ on $Y$ that's clearly
+biased upwards.
+
+[^counterfactuals]: Hello, counterfactuals!
