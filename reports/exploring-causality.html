@@ -786,12 +786,61 @@ Z2-&gt;Y2
 <p>As we can see, we’re getting a very similar result. This gives us additional confidence that our calculation was correct.</p>
 <section id="interventions-according-to-the-true-dag" class="level3">
 <h3 class="anchored" data-anchor-id="interventions-according-to-the-true-dag">Interventions according to the true DAG</h3>
-<p>Now, what’s the deal with the two models — how do we obtain <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span>? Let’s first look at the model corresponding to the true data-generating process. According to <span class="citation" data-cites="pearlCausalInferenceStatistics2016">Pearl, Glymour, and Jewell (<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">2016</a>)</span>, to estimate the causal effect an intervention on <span class="math inline">\(X\)</span> (in our case <span class="math inline">\(do(X = 6)\)</span>) would have on <span class="math inline">\(Y\)</span>, we have to adjust for <span class="math inline">\(X\)</span>’s parent variable <span class="math inline">\(Z\)</span>. We can do that the same way as when we were calculating the true expected value:</p>
+<p>Now, what’s the deal with the two models — how do we obtain <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span>? Let’s first look at the model corresponding to the true data-generating process.</p>
+<p>Our first step is to get from the <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> expression to <span class="math inline">\(\text{E}(Y | X = 6)\)</span>. The <span class="math inline">\(do(\cdot)\)</span> operator has special meaning in Pearl’s framework — it represents conducting an intervention that sets the value of one (or more) variables to some specific value. In our case, <span class="math inline">\(do(X = 6)\)</span> means conducting an intervention that sets all values of <span class="math inline">\(X\)</span> to 6. Therefore, within Pearl’s framework there’s a difference between <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> — which represents the expected value of the <span class="math inline">\(Y\)</span> variable if we were to <em>intervene</em> on <span class="math inline">\(X\)</span> so that all values of <span class="math inline">\(X\)</span> are set to 6 — and <span class="math inline">\(\text{E}(Y | X = 6)\)</span> — which is simply the expected value of <span class="math inline">\(Y\)</span> we <em>observe</em> for cases where <span class="math inline">\(X = 6\)</span>.</p>
+<p><span class="citation" data-cites="pearlCausalCalculusStatistical1996">Pearl (<a href="#ref-pearlCausalCalculusStatistical1996" role="doc-biblioref">1996</a>)</span> introduces a set of three rules, called the do-calculus, which allows us to transition from <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> to <span class="math inline">\(\text{E}(Y | X = 6)\)</span> if it’s possible given the DAG we’re relying on.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> According to these rules, we start with <span class="math inline">\(\text{E}(Y | do(X = 6), Z = z)\)</span> — according to our DAG, <span class="math inline">\(Y\)</span> depends both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>; it’s conditional on both. Furthermore, since we’re doing an intervention on <span class="math inline">\(X\)</span> we have <span class="math inline">\(do(X = 6)\)</span>; since we’re only observing the value of <span class="math inline">\(Z\)</span>, there’s no <span class="math inline">\(do(Z = z)\)</span> term, but only <span class="math inline">\(Z = z\)</span>.</p>
+<p>Since our goal is <span class="math inline">\(\text{E}(Y | X = 6)\)</span>, the first thing we’ll try doing is converting the <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span>. We’re allowed to do this if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span>, conditional on <span class="math inline">\(Z\)</span>, in a modified DAG where all arrows exiting <span class="math inline">\(X\)</span> are removed. This may be written as <span class="math inline">\((Y \perp X | Z)_{G_{\underline{X}}}\)</span>, where <span class="math inline">\(G_{\underline{X}}\)</span> stands for “graph where all arrows going out of <span class="math inline">\(X\)</span> are removed”. This graph is shown in Figure <a href="#fig-three-var-confounding-x-out-mutil">Figure&nbsp;5</a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-three-var-confounding-x-out-mutil" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+effects_G
+</title>
+<!-- X -->
+<g id="node1" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y --> <g id="node2" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+X-&gt;Y
+</title>
+</g> <!-- Z --> <g id="node3" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Z&#45;&gt;X --> <g id="edge2" class="edge">
+<title>
+Z-&gt;X
+</title>
+<path fill="none" stroke="black" d="M76.64,-74.15C68.12,-64.69 56.91,-52.24 47.31,-41.56"></path> <polygon fill="black" stroke="black" points="49.63,-38.92 40.34,-33.82 44.43,-43.6 49.63,-38.92"></polygon> </g> <!-- Z&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 5: Graph with all arrows emanating from <span class="math inline">\(X\)</span> removed.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As we can seen, once we’ve removed the arrow <span class="math inline">\(X \textrightarrow Y\)</span>, and conditioning on <span class="math inline">\(Z\)</span>, <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> really are independent. Therefore, we can replace <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> with <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>. The final step is adjusting for <span class="math inline">\(Z\)</span>, since it’s confounding the causal relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. We do that by integrating over the values of <span class="math inline">\(Z\)</span>, which leads to the same set of equations we’ve had when looking at the expectation from the true data-generating process:</p>
 <p><span class="math display">\[\begin{align}
-    \text{E}(Y | do(X = 6), Z) &amp;= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
-        \text{d}z \\
-    \text{E}(Y | do(X = 6), Z) &amp;= \int_{z \in Z}(\beta_{YX} \times 6 +
-        \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
+    \text{E}(Y | do(X = 6), Z) &amp;= \text{E}(Y | X = 6, Z) \\
+        &amp;= \text{E}(\text{E}(Y | X = 6)) \\
+        &amp;= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
+            \text{d}z \\
+        &amp;= \int_{z \in Z}(\beta_{YX} \times 6 +
+            \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}\]</span></p>
 <p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\beta_{YX}\)</span> and <span class="math inline">\(\beta_{YZ}\)</span>, that is <span class="math inline">\(\beta_{YX} = 1.04\)</span> and <span class="math inline">\(\beta_{YZ} = 1.03\)</span></p>
 <div class="cell" data-execution_count="16">
@@ -823,7 +872,7 @@ Z2-&gt;Y2
     \text{E}(Y | do(X = 6), Z) &amp;= \text{E}(Y | X = 6, Z) \\
         &amp;= \beta_{YX} \times 6 + \beta_{YZ} \times Z.
 \end{align}\]</span></p>
-<p>However, we have to be mindful of one thing: according to our model, <span class="math inline">\(Z\)</span> is under the direct influence of <span class="math inline">\(X\)</span>. Therefore, if <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span> through an intervention, <span class="math inline">\(Z\)</span> also changes. We have to keep that in mind if we want to get an estimate of the total causal effect <span class="math inline">\(X\)</span> has on <span class="math inline">\(Y\)</span> — both the direct effect, and the indirect effect going through <span class="math inline">\(Z\)</span>. So we’ll modify the previous equation, and mark the new variable as <span class="math inline">\(Z'\)</span>, keeping in mind that it represents the values that the <span class="math inline">\(Z\)</span> variable would obtain if the <span class="math inline">\(X\)</span> values were set to some <span class="math inline">\(x\)</span> (in our case, 6)<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<p>However, we have to be mindful of one thing: according to our model, <span class="math inline">\(Z\)</span> is under the direct influence of <span class="math inline">\(X\)</span>. Therefore, if <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span> through an intervention, <span class="math inline">\(Z\)</span> also changes. We have to keep that in mind if we want to get an estimate of the total causal effect <span class="math inline">\(X\)</span> has on <span class="math inline">\(Y\)</span> — both the direct effect, and the indirect effect going through <span class="math inline">\(Z\)</span>. So we’ll modify the previous equation, and mark the new variable as <span class="math inline">\(Z'\)</span>, keeping in mind that it represents the values that the <span class="math inline">\(Z\)</span> variable would obtain if the <span class="math inline">\(X\)</span> values were set to some <span class="math inline">\(x\)</span> (in our case, 6)<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
 <p><span class="math display">\[\begin{align}
     \text{E}(Y | do(X = 6), Z') &amp;= \text{E}(Y | X = 6, Z') \\
         &amp;= \beta_{YX} \times 6 + \beta_{YZ} \times Z'.
@@ -916,7 +965,7 @@ Z2-&gt;Y2
 <div class="data-frame"><p>1 rows × 2 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y_dag_mean</th><th>Y_bn_mean</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>16.1387</td><td>19.4882</td></tr></tbody></table></div>
 </div>
 </div>
-<p>Here’s something interesting. While the model corresponding to the true DAG makes variable predictions (whose mean matches the expectation we’ve calculated earlier), the wrong model predicts values to be in a very narrow range (and which also have an overestimated expected value, also as calculated earlier). <a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>Here’s something interesting. While the model corresponding to the true DAG makes variable predictions (whose mean matches the expectation we’ve calculated earlier), the wrong model predicts values to be in a very narrow range (and which also have an overestimated expected value, also as calculated earlier). <a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
 
 </section>
 </section>
@@ -924,6 +973,9 @@ Z2-&gt;Y2
 
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-pearlCausalCalculusStatistical1996" class="csl-entry" role="doc-biblioentry">
+Pearl, Judea. 1996. <span>“A <span>Causal Calculus</span> for <span>Statistical Research</span>.”</span> In <em>Learning from <span>Data</span></em>, edited by Doug Fisher and Hans-J. Lenz, 112:23–33. Lecture <span>Notes</span> in <span>Statistics</span>. <span>New York, NY</span>: <span>Springer New York</span>. <a href="https://doi.org/10.1007/978-1-4612-2404-4_3">https://doi.org/10.1007/978-1-4612-2404-4_3</a>.
+</div>
 <div id="ref-pearlCausalInferenceStatistics2016" class="csl-entry" role="doc-biblioentry">
 Pearl, Judea, Madelyn Glymour, and Nicholas P. Jewell. 2016. <em>Causal <span>Inference</span> in <span>Statistics</span>: <span>A Primer</span></em>. <span>John Wiley &amp; Sons</span>.
 </div>
@@ -931,8 +983,9 @@ Pearl, Judea, Madelyn Glymour, and Nicholas P. Jewell. 2016. <em>Causal <span>In
 
 <ol>
 <li id="fn1" role="doc-endnote"><p>I’m putting unknown values (e.g.&nbsp;<span class="math inline">\(\mu_X\)</span>) instead of fixed values (e.g. 1) because the DAG, by itself, does not imply any specific form of the relationship between the variables. The variables don’t have to be normally distributed, either; I’m assuming a normal distribution for simplicity.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2" role="doc-endnote"><p>Hello, counterfactuals!<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3" role="doc-endnote"><p>I do have to put a disclaimer — since I’m really new to both Julia and <code>Turing.jl</code>, it could easily be the case that I’ve coded something model incorrectly.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>The notation in this text is a bit different than the <span class="math inline">\(do(\cdot)\)</span> notation I’m using here. From my reading, Pearl started to use the <span class="math inline">\(do(\cdot)\)</span> operator in his later work. In the text referenced here, <span class="math inline">\(p(Y | \hat{X})\)</span> is equal to <span class="math inline">\(p(Y | do(X = x))\)</span>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>Hello, counterfactuals!<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>I do have to put a disclaimer — since I’m really new to both Julia and <code>Turing.jl</code>, it could easily be the case that I’ve coded something model incorrectly.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main>
 <!-- /main column -->

@@ -606,16 +606,66 @@ confidence that our calculation was correct.
 
 Now, what's the deal with the two models --- how do we obtain $\text{E}(Y | do(X
 = 6))$? Let's first look at the model corresponding to the true
-data-generating process. According to @pearlCausalInferenceStatistics2016, to
-estimate the causal effect an intervention on $X$ (in our case $do(X = 6)$)
-would have on $Y$, we have to adjust for $X$'s parent variable $Z$.
-We can do that the same way as when we were calculating the true expected value:
+data-generating process.
+
+Our first step is to get from the $\text{E}(Y | do(X = 6))$ expression to
+$\text{E}(Y | X = 6)$. The $do(\cdot)$ operator has special meaning in Pearl's
+framework --- it represents conducting an intervention that sets the value of
+one (or more) variables to some specific value. In our case, $do(X = 6)$ means
+conducting an intervention that sets all values of $X$ to 6. Therefore,
+within Pearl's framework there's a difference between $\text{E}(Y | do(X = 6))$
+--- which represents the expected value of the $Y$ variable if we were to
+*intervene* on $X$ so that all values of $X$ are set to 6 --- and
+$\text{E}(Y | X = 6)$ --- which is simply the expected value of $Y$ we *observe*
+for cases where $X = 6$.
+
+@pearlCausalCalculusStatistical1996 introduces a set of three rules, called the
+do-calculus, which allows us to transition from $\text{E}(Y | do(X = 6))$
+to $\text{E}(Y | X = 6)$ if it's possible given the DAG we're relying
+on.[^intervention_notation] According to these rules, we start with
+$\text{E}(Y | do(X = 6), Z = z)$ --- according to our DAG, $Y$ depends both
+on $X$ and $Z$; it's conditional on both. Furthermore, since we're doing an
+intervention on $X$ we have $do(X = 6)$; since we're only observing the value of
+$Z$, there's no $do(Z = z)$ term, but only $Z = z$.
+
+Since our goal is $\text{E}(Y | X = 6)$, the first thing we'll try doing is
+converting the $do(X = 6)$ into $X = 6$. We're allowed to do this if $X$ is
+independent of $Y$, conditional on $Z$, in a modified DAG where all arrows
+exiting $X$ are removed. This may be written as
+$(Y \perp X | Z)_{G_{\underline{X}}}$, where $G_{\underline{X}}$ stands for
+"graph where all arrows going out of $X$ are removed". This graph is shown in
+Figure @fig-three-var-confounding-x-out-mutil.
+
+```{dot fig_dag_effects}
+//| fig-cap: Graph with all arrows emanating from $X$ removed.
+//| label: fig-three-var-confounding-x-out-mutil
+
+digraph effects_G {
+    layout=dot;
+    bgcolor="transparent";
+    rankdir=TB;
+    X -> Y[minlen=4; style="invisible"; arrowhead="none"];
+    Z -> X;
+    Z -> Y;
+    {rank="same"; X; Y;}
+}
+```
+
+As we can seen, once we've removed the arrow $X \textrightarrow Y$, and
+conditioning on $Z$, $X$ and $Y$ really are independent. Therefore, we can
+replace $\text{E}(Y | do(X = 6), Z)$ with $\text{E}(Y | X = 6, Z)$. The final
+step is adjusting for $Z$, since it's confounding the causal relationship
+between $X$ and $Y$. We do that by integrating over the values of $Z$, which
+leads to the same set of equations we've had when looking at the expectation
+from the true data-generating process:
 
 \begin{align}
-    \text{E}(Y | do(X = 6), Z) &= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
-        \text{d}z \\
-    \text{E}(Y | do(X = 6), Z) &= \int_{z \in Z}(\beta_{YX} \times 6 +
-        \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
+    \text{E}(Y | do(X = 6), Z) &= \text{E}(Y | X = 6, Z) \\
+        &= \text{E}(\text{E}(Y | X = 6)) \\
+        &= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
+            \text{d}z \\
+        &= \int_{z \in Z}(\beta_{YX} \times 6 +
+            \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}
 
 ```{julia}
@@ -782,3 +832,7 @@ something model incorrectly.
 1) because the DAG, by itself, does not imply any specific form of the
 relationship between the variables. The variables don't have to be normally
 distributed, either; I'm assuming a normal distribution for simplicity.
+[^intervention_notation]: The notation in this text is a bit different than the
+$do(\cdot)$ notation I'm using here. From my reading, Pearl started to use the
+$do(\cdot)$ operator in his later work. In the text referenced here,
+$p(Y | \hat{X})$ is equal to $p(Y | do(X = x))$.
