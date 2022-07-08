@@ -300,11 +300,12 @@ graph, which we know to be false:
 
 digraph G {
     layout=dot;
+    Z[rank="min"];
     rankdir=TB;
-    X -> Y;
-    X -> Z;
-    Z -> Y[minlen=4];
-    {rank="same"; Z; Y;}
+    X -> Y[minlen=4];
+    X -> Z[color="red"];
+    Z -> Y;
+    {rank="same"; X; Y;}
 }
 ```
 
@@ -372,8 +373,7 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
                                     MCMCChains.summarystats(y_hat_dag)[:, :mean],
                                 "Y_bn" =>
                                     MCMCChains.summarystats(y_hat_bn)[:, :mean],
-                                "Y_obs" =>
-                                    Y)
+                                "Y_obs" => Y)
 
 p_dag_obs = compare_yhat(d_dag_bn;
                          y_pred_1_name = "Y_dag",
@@ -414,8 +414,8 @@ digraph G {
     subgraph dag_true {
         rankdir=TB;
         X1[label="X"];
-        Y1[label="Y"]
-        Z1[label="Z"]
+        Y1[label="Y"];
+        Z1[label="Z"];
         X1 -> Y1[minlen=4];
         Z1 -> X1[style="invisible", arrowhead="none"];
         Z1 -> Y1;
@@ -424,13 +424,14 @@ digraph G {
     subgraph dag_false {
         rankdir=TB;
         X2[label="X"];
-        Y2[label="Y"]
-        Z2[label="Z"]
-        X2 -> Y2;
+        Y2[label="Y"];
+        Z2[label="Z"];
+        X2 -> Y2[minlen=4];
+        Z2 -> Y2;
         X2 -> Z2;
-        Z2 -> Y2[minlen=4];
-        {rank="same"; Z2; Y2;}
+        {rank="same"; X2; Y2;}
     }
+    {rank="same"; Z1; Z2;}
 }
 ```
 
@@ -686,7 +687,7 @@ d_dag_bn = DataFrames.DataFrame("Y_dag" =>
                                     MCMCChains.summarystats(y_hat_dag)[:, :mean],
                                 "Y_bn" => y_hat_bn_summary[:, :mean])
 
-compare_yhat(d_dag_bn)
+compare_yhat(d_dag_bn) |> display
 
 DataFrames.combine(d_dag_bn,
                    DataFrames.All() .=> mean)
