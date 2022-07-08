@@ -130,9 +130,9 @@ digraph effects_G {
     layout=dot;
     bgcolor="transparent";
     rankdir=TB;
-    X -> Y [label="b_yx = 2", minlen=4];
-    Z -> X [label="b_xz = 3"];
-    Z -> Y [label="b_yz = 4"];
+    X -> Y [label="b_XY = 2", minlen=4];
+    Z -> X [label="b_ZX = 3"];
+    Z -> Y [label="b_ZY = 4"];
     {rank="same"; X; Y;}
 }
 ```
@@ -168,7 +168,7 @@ d = DataFrames.DataFrame("Y" => Y,
 d[1:10, :]
 ```
 
-## A brief introduction to causal DAGs
+## Linear regression and causal DAGs
 
 I've mentioned earlier that we have to somehow close the backdoor path over $Z$
 if we want to get an unbiased estimate of the causal effect of $X$ on $Y$.
@@ -241,33 +241,38 @@ I'll fit the model represented in Figure @fig-three-var-confounding-effs
 using the `Turing.jl` library. The model can be coded as follows:
 
 ```{julia model_three-var-simple-confound}
+#| results: false
 Turing.@model function gen_model_y_xz(X,
                                       Y,
                                       Z)
-    s ~ Turing.Exponential(1)
+    s_X ~ Turing.Exponential(1)
+    s_Y ~ Turing.Exponential(1)
 
-    b_XZ ~ Turing.Normal(2, 1)
-    b_YX ~ Turing.Normal(2, 1)
-    b_YZ ~ Turing.Normal(2, 1)
+    mu_z ~ Turing.Normal(2, 1)
+    s_Z ~ Turing.Exponential(1)
 
-    Z ~ Turing.Normal(2, s)
+    Z ~ Turing.Normal(mu_z, s_Z)
+
+    b_ZX ~ Turing.Normal(2, 1)
+    b_XY ~ Turing.Normal(2, 1)
+    b_ZY ~ Turing.Normal(2, 1)
 
     for i in eachindex(X)
-        X[i] ~ Turing.Normal(Z[i] * b_XZ,
-                             s)
+        X[i] ~ Turing.Normal(Z[i] * b_ZX,
+                             s_X)
 
-        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
-                             s)
+        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY,
+                             s_Y)
     end
 end
 ```
 
-Next, we tell `Turing` to sample using the NUTS sampler, which is the same one
-*Stan* uses:
+Next, we use the NUTS sampler (the same one *Stan* is using) to get samples from
+the posterior distribution:
 
 ```{julia sample_three-var-simple-confound}
+#| warning: false
 #| message: false
-
 chains = Turing.sample(gen_model_y_xz(d.X,
                                       d.Y,
                                       d.Z),
@@ -276,6 +281,8 @@ chains = Turing.sample(gen_model_y_xz(d.X,
                        Turing.MCMCThreads(),
                        3000,
                        4)
+
+MCMCChains.summarystats(chains)
 ```
 
 Indeed, the parameters estimated in this way correspond to the ones we've
@@ -289,25 +296,28 @@ I know to be incorrect - the Cauchy distribution with location 3 and scale 1.
 Turing.@model function gen_model_y_xz_cauchy(X,
                                              Y,
                                              Z)
-    s ~ Turing.Exponential(1)
+    s_X ~ Turing.Exponential(1)
+    s_Y ~ Turing.Exponential(1)
 
-    b_XZ ~ Turing.Normal(2, 1)
-    b_YX ~ Turing.Normal(2, 1)
-    b_YZ ~ Turing.Normal(2, 1)
+    b_ZX ~ Turing.Normal(2, 1)
+    b_XY ~ Turing.Normal(2, 1)
+    b_ZY ~ Turing.Normal(2, 1)
 
     Z ~ Turing.Cauchy(3, 1)
 
     for i in eachindex(X)
-        X[i] ~ Turing.Normal(Z[i] * b_XZ,
-                             s)
+        X[i] ~ Turing.Normal(Z[i] * b_ZX,
+                             s_X)
 
-        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
-                             s)
+        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY,
+                             s_Y)
     end
 end
 ```
 
 ```{julia sample_three-var-simple-confound_cauchy}
+#| warning: false
+#| message: false
 chains_cauchy = Turing.sample(gen_model_y_xz_cauchy(d.X,
                                                     d.Y,
                                                     d.Z),
@@ -316,20 +326,24 @@ chains_cauchy = Turing.sample(gen_model_y_xz_cauchy(d.X,
                               Turing.MCMCThreads(),
                               3000,
                               4)
+
+MCMCChains.summarystats(chains_cauchy)
 ```
 
 Luckily, this also seems to work. So we can be somewhat off.
 
-Now, let's examine a DAG we know to be false (a simple Bayesian network, I
-guess), and compare the predictions of a model that's coded in line with that
-DAG, with those of the model coded according to the true DAG. If my
-understanding is correct, both the causal DAG and the Bayesian network should be
-able to make predictions of similar accuracy. That would mean that values
-$\hat{y}^{cDAG}$ predicted from the causal DAG should be very similar (or
-identical) to the values $\hat{y}^{BN}$ predicted by a Bayesian network.
+Now, let's examine a DAG we know to be false, and compare the predictions of a
+model that's coded in line with that DAG, with those of the model coded in line
+with the true DAG. If my understanding is correct, both the causal DAG and the
+Bayesian network should be able to make predictions of similar accuracy.
+Moreover, they should make (practically) equivalent predictions. That
+would mean that values $\hat{y}^{cDAG}$ predicted from the causal DAG should be
+(practically )identical to the values $\hat{y}^{BN}$ predicted by a Bayesian
+network.
 
 To check this claim, I'll try modeling the data according to the following
-graph, which we know to be false:
+graph, which we know to be false, as here we have a causal effect of $X$ on
+$Z$, and not the other way around:
 
 ```{dot fig_bn_x-confound}
 //| fig-align: center
@@ -347,29 +361,45 @@ digraph G {
 }
 ```
 
+This graph implies a different set of equations representing the relationships
+between the variables[^mu_x]:
+
+\begin{align}
+    X &\sim \text{normal}(\mu_X, \sigma_X) \\
+    z_i &\sim \text{normal}(\mu_{z_i}, \sigma_Z) \\
+    y_i &\sim \text{normal}(\mu_{y_i}, \sigma_Y) \\
+    \mu_{z_i} &= b_{XZ} x_i \\
+    \mu_{y_i} &= b_{XY} x_i + b_{ZY} z_i,\; \text{for}\; i \in \{1, \ldots, N\}
+\end{align}
+
+I'll again code and fit the model using `Turing.jl`:
+
 ```{julia model_bn_x-confound}
+#| warning: false
+#| message: false
 Turing.@model function bn_model_y_xz(X,
                                      Y,
                                      Z)
-    s ~ Turing.Exponential(1)
+    mu_X ~ Turing.Normal(2, 1)
+    s_X ~ Turing.Exponential(1)
 
-    b_ZX ~ Turing.Normal(2, 1)
-    b_YX ~ Turing.Normal(2, 1)
-    b_YZ ~ Turing.Normal(2, 1)
+    X ~ Turing.Normal(mu_X, s_X)
 
-    X ~ Turing.Normal(2, 1)
+    s_Y ~ Turing.Exponential(1)
+    s_Z ~ Turing.Exponential(1)
+
+    b_XZ ~ Turing.Normal(2, 1)
+    b_XY ~ Turing.Normal(2, 1)
+    b_ZY ~ Turing.Normal(2, 1)
 
     for i in eachindex(X)
-        Z[i] ~ Turing.Normal(X[i] * b_ZX,
-                             s)
+        Z[i] ~ Turing.Normal(X[i] * b_XZ,
+                             s_Z)
 
-        Y[i] ~ Turing.Normal(X[i] * b_YX + Z[i] * b_YZ,
-                             s)
+        Y[i] ~ Turing.Normal(X[i] * b_XZ + Z[i] * b_ZY,
+                             s_Y)
     end
 end
-```
-
-```{julia sample_bn_x-confound}
 
 chains_x_conf = Turing.sample(bn_model_y_xz(d.X,
                                             d.Y,
@@ -379,6 +409,8 @@ chains_x_conf = Turing.sample(bn_model_y_xz(d.X,
                               Turing.MCMCThreads(),
                               3000,
                               4)
+
+MCMCChains.summarystats(chains_x_conf)
 ```
 
 So, the coefficients for the effect of $X$ on $Y$ and $Z$ on $Y$ are actually
@@ -741,3 +773,7 @@ which also have an overestimated expected value, also as calculated earlier).
 [^disclaimer_compare]: I do have to put a disclaimer --- since I'm really new
 to both Julia and `Turing.jl`, it could easily be the case that I've coded
 something model incorrectly.
+[^mu_x]: I'm putting unknown values (e.g. $\mu_X$) instead of fixed values (e.g.
+1) because the DAG, by itself, does not imply any specific form of the
+relationship between the variables. The variables don't have to be normally
+distributed, either; I'm assuming a normal distribution for simplicity.
