@@ -11,11 +11,12 @@ format:
         toc: true
         toc-location: left
         theme: litera
+        code-overflow: wrap
 ---
 
 Lately, I've been reading quite a lot about causal inference in statistics and
 the various approaches developed through the decades. Pearl's framework, which
-relies on directed acyclic graphs (DAGs) resonated with me the most; I really
+relies on directed acyclic graphs (DAGs), resonated with me the most; I really
 like DAGs as a way of expressing ideas about causality, and as a tool for
 tackling causal questions and building causal models.
 
@@ -32,7 +33,13 @@ frameworks.
 
 The first case I'm going to look at is a simple three-variable case where one
 variable acts as a confounder of the causal relationships of the remaining two
-variables. I'm talking about the case pictured below:
+variables. We'll have a variable $X$ that exerts a causal influence on a
+variable $Y$. We'll also have a variable $Z$ that has a causal effect on both
+$X$ and $Y$, making $Z$ a confounder of the causal relationship between
+$X$ and $Y$. This model can be represented by the following directed acyclic
+graph (DAG), where each arrow represents the causal effect which the variable
+at the arrow's tail has on the variable at the arrow's head (e.g. $X$ has a
+causal effect on $Y$):
 
 ```{dot fig_dag_no-coef}
 //| fig-align: center
@@ -49,15 +56,32 @@ digraph G {
 }
 ```
 
-So, I'm assuming that the $X$ variable exerts a causal effect on the $Y$
-variable, and that the $Z$ variable has a causal effect both on $X$ and $Y$.
-Therefore, $Z$ creates a backdoor path from $X$ to $Y$, which means that it has
-to be adjusted for in order to get an unbiased estimate of the causal effect of
-$X$ on $Y$.
+In the graph pictured in Figure @fig-three-var-confounding
+there are two paths between $X$ and $Y.$ The first path is the direct one, going
+from $X$ to $Y$ ($X \textrightarrow Y$). The second path is an indirect one,
+and goes over the $Z$ variable: $X \textleftarrow Z \textrightarrow Y$.
 
-Before simulating some values for the variables, I'll load some Julia packages:
+I've mentioned earlier that the direction of the arrows tells us the direction
+of the causal effects. Therefore, we can say that the path
+$X \textrightarrow Y$ is causal. However, the path
+$X \textleftarrow Z \textrightarrow Y$ is not a causal path --- starting from
+the left, we have an arrow going into $X$ from $Z$, and then an arrow going from
+$Z$ into $Y$. Since this path starts with an arrow pointing *into* $X$, this
+makes it a *backdoor path* between $X$ and $Y$.
+
+The idea of backdoor paths is one of the central ideas in Pearl's framework.
+Backdoor paths are not causal, but create problems when trying to estimate
+causal effects. In the graph in Figure @fig-three-var-confounding, we'd have to
+somehow close the backdoor path in order to obtain an unbiased estimate of the
+causal effect of $X$ on $Y$. In this case, the path can be close by adjusting
+for the $Z$ variable. We'll see how to do that in a bit.
+
+I'll first set up the Julia environment and simulate some values for the
+variables $X$, $Z$ and $Y$.
 
 ```{julia setup}
+#| output: false
+
 using Pkg
 
 Pkg.activate("..")

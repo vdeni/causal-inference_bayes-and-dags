@@ -164,11 +164,11 @@ div.csl-indent {
 
 </header>
 
-<p>Lately, I’ve been reading quite a lot about causal inference in statistics and the various approaches developed through the decades. Pearl’s framework, which relies on directed acyclic graphs (DAGs) resonated with me the most; I really like DAGs as a way of expressing ideas about causality, and as a tool for tackling causal questions and building causal models.</p>
+<p>Lately, I’ve been reading quite a lot about causal inference in statistics and the various approaches developed through the decades. Pearl’s framework, which relies on directed acyclic graphs (DAGs), resonated with me the most; I really like DAGs as a way of expressing ideas about causality, and as a tool for tackling causal questions and building causal models.</p>
 <p>As I’ve been focused on Bayesian modeling for the past couple of years, I’ve found the generative modeling approach to be quite a useful way of approaching data analysis. The directed acyclic graph approach and the generative modeling approach seem to have a lot in common. However, I still feel like a difference is being made between the two. Because of this (and other pedagogic reasons), I’ve decided to explore some simple causal setups to gain (hopefully) a better understanding of both causal inference and the DAG/generative modeling frameworks.</p>
 <section id="case-1---three-variables-with-simple-confounding" class="level1">
 <h1>Case 1 - three variables with simple confounding</h1>
-<p>The first case I’m going to look at is a simple three-variable case where one variable acts as a confounder of the causal relationships of the remaining two variables. I’m talking about the case pictured below:</p>
+<p>The first case I’m going to look at is a simple three-variable case where one variable acts as a confounder of the causal relationships of the remaining two variables. We’ll have a variable <span class="math inline">\(X\)</span> that exerts a causal influence on a variable <span class="math inline">\(Y\)</span>. We’ll also have a variable <span class="math inline">\(Z\)</span> that has a causal effect on both <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, making <span class="math inline">\(Z\)</span> a confounder of the causal relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. This model can be represented by the following directed acyclic graph (DAG), where each arrow represents the causal effect which the variable at the arrow’s tail has on the variable at the arrow’s head (e.g.&nbsp;<span class="math inline">\(X\)</span> has a causal effect on <span class="math inline">\(Y\)</span>):</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-three-var-confounding" class="quarto-figure quarto-figure-center anchored">
@@ -211,9 +211,11 @@ Z-&gt;Y
 </div>
 </div>
 </div>
-<p>So, I’m assuming that the <span class="math inline">\(X\)</span> variable exerts a causal effect on the <span class="math inline">\(Y\)</span> variable, and that the <span class="math inline">\(Z\)</span> variable has a causal effect both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. Therefore, <span class="math inline">\(Z\)</span> creates a backdoor path from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span>, which means that it has to be adjusted for in order to get an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>.</p>
-<p>Before simulating some values for the variables, I’ll load some Julia packages:</p>
-<div class="cell" data-execution_count="2">
+<p>In the graph pictured in Figure <a href="#fig-three-var-confounding">Figure&nbsp;1</a> there are two paths between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y.\)</span> The first path is the direct one, going from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span> (<span class="math inline">\(X \textrightarrow Y\)</span>). The second path is an indirect one, and goes over the <span class="math inline">\(Z\)</span> variable: <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>.</p>
+<p>I’ve mentioned earlier that the direction of the arrows tells us the direction of the causal effects. Therefore, we can say that the path <span class="math inline">\(X \textrightarrow Y\)</span> is causal. However, the path <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span> is not a causal path — starting from the left, we have an arrow going into <span class="math inline">\(X\)</span> from <span class="math inline">\(Z\)</span>, and then an arrow going from <span class="math inline">\(Z\)</span> into <span class="math inline">\(Y\)</span>. Since this path starts with an arrow pointing <em>into</em> <span class="math inline">\(X\)</span>, this makes it a <em>backdoor path</em> between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>.</p>
+<p>The idea of backdoor paths is one of the central ideas in Pearl’s framework. Backdoor paths are not causal, but create problems when trying to estimate causal effects. In the graph in Figure <a href="#fig-three-var-confounding">Figure&nbsp;1</a>, we’d have to somehow close the backdoor path in order to obtain an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. In this case, the path can be close by adjusting for the <span class="math inline">\(Z\)</span> variable. We’ll see how to do that in a bit.</p>
+<p>I’ll first set up the Julia environment and simulate some values for the variables <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span>.</p>
+<div class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Pkg</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">Pkg</span>.<span class="fu">activate</span>(<span class="st">".."</span>)</span>
@@ -297,7 +299,7 @@ Z-&gt;Y
 </div>
 </div>
 <p>With that in mind, I’ll simulate the data and put it in a data frame:</p>
-<div class="cell" data-execution_count="3">
+<div class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>Z_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>);</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">1000</span> <span class="co"># number of simulated draws</span></span>
@@ -330,7 +332,7 @@ Z-&gt;Y
 </div>
 </div>
 <p>Pearl’s DAG framework tells us that fitting a, in this case, linear model with <span class="math inline">\(X\)</span> as a predictor and <span class="math inline">\(Y\)</span> as criterion would give us a biased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> due to the backdoor path over <span class="math inline">\(Z\)</span> (<span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>). Therefore, fitting a linear regression model should give an estimate of the <span class="math inline">\(b\)</span> coefficient for <span class="math inline">\(X\)</span> different than <span class="math inline">\(2\)</span>, which was coded while creating the data.</p>
-<div class="cell" data-execution_count="4">
+<div class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
@@ -351,7 +353,7 @@ X            3.17275    0.0153718  206.40    &lt;1e-99   3.14259    3.20292
 </div>
 <p>As can be seen, we get <span class="math inline">\(X = 3.17\)</span>, which is different than the value set in the simulation.</p>
 <p>According to Pearl’s framework, we should also be able to get to the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> if we control for the confounder <span class="math inline">\(Z\)</span>. Therefore, let’s try fitting another model, this time including <span class="math inline">\(Z\)</span> as a variable in the regression model alongside <span class="math inline">\(X\)</span>.</p>
-<div class="cell" data-execution_count="6">
+<div class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X <span class="op">+</span> Z)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
@@ -374,7 +376,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <p>Now we get a <span class="math inline">\(b_{YX}\)</span> coefficient which corresponds to the one we’ve coded up while simulating the data. The estimate of the effect of <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> is also in line with the value which we’ve coded up.</p>
 <p>Okay, now to the part that’s a bit more tricky. I want to explore the relationships between Bayesian networks and causal directed acyclic graphs. If my understanding is correct, a Bayesian network is, in a way, a subset of a causal directed acyclic graph — it encodes the relationships between the variables under investigation, but doesn’t make additional assumptions which are necessary for causal inference. However, a Bayesian network that corresponds to the true DAG should be able to provide us with unbiased estimates of the causal effects. A Bayesian network that does not correspond to the true DAG, on the other hand, should provide biased estimates of the causal effects, but should still be able to make accurate predictions. This may be a fine distinction, and is something I also aim to explore further down.</p>
 <p>I’ll fit the model represented in Figure <a href="#fig-three-var-confounding-effs">Figure&nbsp;2</a> using the <code>Turing.jl</code> library. The model can be coded as follows:</p>
-<div class="cell" data-execution_count="7">
+<div class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz</span>(X,</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                                      Y,</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                                      Z)</span>
@@ -399,7 +401,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 </div>
 </div>
 <p>Next, we tell <code>Turing</code> to sample using the NUTS sampler, which is the same one <em>Stan</em> uses:</p>
-<div class="cell" data-execution_count="8">
+<div class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>chains <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz</span>(d.X,</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                                      d.Y,</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                                      d.Z),</span>
@@ -416,10 +418,10 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 │   ϵ = 0.00625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
-│   ϵ = 0.0125
+│   ϵ = 0.00625
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188
 ┌ Info: Found initial step size
-│   ϵ = 0.00625
+│   ϵ = 0.0125
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="8">
@@ -428,8 +430,8 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 36.04 seconds
-Compute duration  = 137.04 seconds
+Wall duration     = 32.07 seconds
+Compute duration  = 124.04 seconds
 parameters        = s, b_XZ, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -453,7 +455,7 @@ Quantiles
 </div>
 <p>Indeed, the parameters estimated in this way correspond to the ones we’ve simulated earlier. Now, this probably isn’t that surprising, given that our model is coded in line with the true DAG. Still, that <em>is</em> comforting, I guess.</p>
 <p>I’ll try repeating the analysis using a distribution for the <span class="math inline">\(Z\)</span> variable which I know to be incorrect - the Cauchy distribution with location 3 and scale 1.</p>
-<div class="cell" data-execution_count="9">
+<div class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz_cauchy</span>(X,</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                                             Y,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                             Z)</span>
@@ -477,7 +479,7 @@ Quantiles
 <pre><code>gen_model_y_xz_cauchy (generic function with 2 methods)</code></pre>
 </div>
 </div>
-<div class="cell" data-execution_count="10">
+<div class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>chains_cauchy <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz_cauchy</span>(d.X,</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                                                    d.Y,</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                                                    d.Z),</span>
@@ -527,10 +529,10 @@ Quantiles
 └ @ Turing.Inference /home/denis/.julia/packages/Turing/JdESU/src/inference/hmc.jl:188</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Sampling (4 threads):  75%|█████████████████████▊       |  ETA: 0:00:04</code></pre>
+<pre><code>Sampling (4 threads):  75%|█████████████████████▊       |  ETA: 0:00:03</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Sampling (4 threads): 100%|█████████████████████████████| Time: 0:00:13</code></pre>
+<pre><code>Sampling (4 threads): 100%|█████████████████████████████| Time: 0:00:10</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="10">
 <div class="ansi-escaped-output">
@@ -538,8 +540,8 @@ Quantiles
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 31.34 seconds
-Compute duration  = 93.63 seconds
+Wall duration     = 24.14 seconds
+Compute duration  = 72.23 seconds
 parameters        = s, b_XZ, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -606,7 +608,7 @@ X-&gt;Y
 </div>
 </div>
 </div>
-<div class="cell" data-execution_count="11">
+<div class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">bn_model_y_xz</span>(X,</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>                                     Y,</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                                     Z)</span>
@@ -630,7 +632,7 @@ X-&gt;Y
 <pre><code>bn_model_y_xz (generic function with 2 methods)</code></pre>
 </div>
 </div>
-<div class="cell" data-execution_count="12">
+<div class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>chains_x_conf <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">bn_model_y_xz</span>(d.X,</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>                                            d.Y,</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>                                            d.Z),</span>
@@ -691,8 +693,8 @@ X-&gt;Y
 Iterations        = 1001:1:4000
 Number of chains  = 4
 Samples per chain = 3000
-Wall duration     = 24.81 seconds
-Compute duration  = 77.64 seconds
+Wall duration     = 24.29 seconds
+Compute duration  = 75.0 seconds
 parameters        = s, b_ZX, b_YX, b_YZ
 internals         = lp, n_steps, is_accept, acceptance_rate, log_density, hamiltonian_energy, hamiltonian_energy_error, max_hamiltonian_energy_error, tree_depth, numerical_error, step_size, nom_step_size
 Summary Statistics
@@ -716,7 +718,7 @@ Quantiles
 </div>
 <p>So, the coefficients for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> and <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> are actually quite fine. The coefficient for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Z\)</span> is, of course, gibberish, if interpreted causally. But how do the predicted <span class="math inline">\(Y\)</span> values from this model compare to the values predicted from the true DAG?</p>
 <p>Let’s compare each of these models’ <span class="math inline">\(\hat{y}\)</span> values to the observed <span class="math inline">\(Y\)</span> values, as well as the models’ predictions to each other. I’ll use only the mean estimates of the parameters, disregarding the uncertainty.</p>
-<div class="cell" data-execution_count="13">
+<div class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(d.X,</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
@@ -859,7 +861,7 @@ Z2-&gt;Y2
                     &amp;= \int_{z \in Z}(2 \times 6 + 4z)f_Z(z)\, \text{d}z.
 \end{align}\]</span></p>
 <p>We can use the <code>QuadGK.jl</code> package to calculate this expectation:</p>
-<div class="cell" data-execution_count="14">
+<div class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>)</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="fl">2</span> <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> z) <span class="op">*</span> Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
@@ -873,7 +875,7 @@ Z2-&gt;Y2
 </div>
 </div>
 <p>To confirm that our calculation is correct, we’ll also simulate a new set of <span class="math inline">\(Y\)</span> values, with <span class="math inline">\(X = 6\)</span> (we’ll rely on some of the variables created in the first simulation, and we’ll increase the number of simulated draws):</p>
-<div class="cell" data-execution_count="15">
+<div class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>N_sim <span class="op">=</span> <span class="fl">100000</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>x_i <span class="op">=</span> <span class="fl">6</span></span>
@@ -902,7 +904,7 @@ Z2-&gt;Y2
         \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}\]</span></p>
 <p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\beta_{YX}\)</span> and <span class="math inline">\(\beta_{YZ}\)</span>, that is <span class="math inline">\(\beta_{YX} = 2.01\)</span> and <span class="math inline">\(\beta_{YZ} = 3.95\)</span></p>
-<div class="cell" data-execution_count="17">
+<div class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>b_yz <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -919,7 +921,7 @@ Z2-&gt;Y2
 </div>
 </div>
 <p>Alternatively, instead of relying the fact the we know the distribution of <span class="math inline">\(Z\)</span>, we could do:</p>
-<div class="cell" data-execution_count="18">
+<div class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1</span> <span class="op">/</span> N <span class="op">*</span> <span class="fu">sum</span>(b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_yz <span class="op">*</span> Z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <pre><code>16.141336300477537</code></pre>
@@ -940,7 +942,7 @@ Z2-&gt;Y2
 <p><span class="math display">\[
 \frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 + \beta_{YZ} \times z'_i)
 \]</span></p>
-<div class="cell" data-execution_count="19">
+<div class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>b_zx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">2</span>, <span class="op">:</span>mean]</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>b_yz <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
@@ -968,7 +970,7 @@ Z2-&gt;Y2
         x_i = 6\; \forall\, i
 \]</span></p>
 <p>meaning that we can also estimate the total causal effect of <span class="math inline">\(do(X = x)\)</span> on <span class="math inline">\(Y\)</span> like this:</p>
-<div class="cell" data-execution_count="20">
+<div class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co">#                   E(Z')</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_yz <span class="op">*</span> (b_zx <span class="op">*</span> <span class="fl">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="20">
@@ -976,7 +978,7 @@ Z2-&gt;Y2
 </div>
 </div>
 <p>Here, we get an estimate of the total causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> that’s clearly biased upwards.</p>
-<div class="cell" data-execution_count="21">
+<div class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(<span class="fu">fill</span>(<span class="fl">6</span>,</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
