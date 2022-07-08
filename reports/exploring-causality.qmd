@@ -119,7 +119,7 @@ the variables can be described by a simple linear model. Therefore, we have:
     x_i &\sim \text{normal}(\mu_{x_i}, 1) \\
     y_i &\sim \text{normal}(\mu_{y_i}, 1) \\
     \mu_{x_i} &= 3 z_i \\
-    \mu_{y_i} &= 2 x_i + 4 z_i
+    \mu_{y_i} &= 2 x_i + 4 z_i,\; \text{for}\; i \in \{1, \ldots, N\}
 \end{align}
 
 ```{dot fig_dag_effects}
@@ -168,12 +168,24 @@ d = DataFrames.DataFrame("Y" => Y,
 d[1:10, :]
 ```
 
-Pearl's DAG framework tells us that fitting a, in this case, linear model
-with $X$ as a predictor and $Y$ as criterion would give us a biased estimate of
-the causal effect of $X$ on $Y$ due to the backdoor path over $Z$
-($X \textleftarrow Z \textrightarrow Y$). Therefore, fitting a linear regression
-model should give an estimate of the $b$ coefficient for $X$ different than $2$,
-which was coded while creating the data.
+## A brief introduction to causal DAGs
+
+I've mentioned earlier that we have to somehow close the backdoor path over $Z$
+if we want to get an unbiased estimate of the causal effect of $X$ on $Y$.
+Since we're dealing with simple linear models, we'll close the backdoor path by
+including $Z$ as a predictor in a multiple linear regression model, as this will
+adjust for its effect.
+
+But first, let's fit the model without including $Z$ to see what estimate of the
+causal effect of $X$ on $Y$ we'll get. When simulating data, we've set the $b$
+coefficient for the effect of $X$ on $Y$ to $b_{XY} = 2$, so what we'd expect
+is an estimate $\hat{b}_{XY} \ne 2$.
+
+(Note: I'm naming the coefficients so that the left variable in the subscript
+refers to the variable causing the change, and the right variable in the
+subscript refers to the variable being changed. Therefore, $b_{XY}$ denotes the
+coefficient which represents our belief about the causal effect of $X$ on
+$Y$.)
 
 ```{julia fit_confounded}
 f = StatsModels.@formula(Y ~ X)
@@ -190,12 +202,12 @@ x_idx = findall(x -> x == "X",
 
 Markdown.parse("""
                As can be seen, we get
-               \$X = $(coef(fit_y_x)[x_idx] |> round_2)\$, which is different
-               than the value set in the simulation.
+               \$\\hat{b}_{XY} = $(coef(fit_y_x)[x_idx] |> round_2)\$, which is
+               different than the value set in the simulation.
                """)
 ```
 
-According to Pearl's framework, we should also be able to get to the causal
+As mentioned earlier, we should be able to get an unbiased estimate of the
 effect of $X$ on $Y$ if we control for the confounder $Z$. Therefore, let's try
 fitting another model, this time including $Z$ as a variable in the regression
 model alongside $X$.
@@ -207,9 +219,11 @@ fit_y_xz = GLM.lm(f,
                   d)
 ```
 
-Now we get a $b_{YX}$ coefficient which corresponds to the one we've coded up
-while simulating the data. The estimate of the effect of $Z$ on $Y$ is also in
-line with the value which we've coded up.
+Now we get a $\hat{b}_{XY}$ coefficient which corresponds to the one we've coded
+up while simulating the data. The estimate of the effect of $Z$ on $Y$ is also
+in line with the value which we've coded up.
+
+## Bayesian networks, generative models and whatnot
 
 Okay, now to the part that's a bit more tricky. I want to explore the
 relationships between Bayesian networks and causal directed acyclic graphs.
