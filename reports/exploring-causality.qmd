@@ -108,7 +108,7 @@ include(joinpath("..",
 Random.seed!(1)
 ```
 
-Now, let's simulate data from the data generating process described in
+Now, let's simulate data from the data-generating process described in
 @fig-three-var-confounding. For simplicity, I'll assume all variables are
 distributed normally with the same standard deviation $\sigma = 1$, but with
 different means. Also for simplicity, I'll assume that the relationships between
@@ -396,7 +396,7 @@ Turing.@model function bn_model_y_xz(X,
         Z[i] ~ Turing.Normal(X[i] * b_XZ,
                              s_Z)
 
-        Y[i] ~ Turing.Normal(X[i] * b_XZ + Z[i] * b_ZY,
+        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY,
                              s_Y)
     end
 end
@@ -413,8 +413,8 @@ chains_x_conf = Turing.sample(bn_model_y_xz(d.X,
 MCMCChains.summarystats(chains_x_conf)
 ```
 
-So, the coefficients for the effect of $X$ on $Y$ and $Z$ on $Y$ are actually
-quite fine. The coefficient for the effect of $X$ on $Z$ is, of course,
+So, the estimates for $b_{XY}$ and $b_{ZY}$ are actually quite fine.
+The coefficient for the effect of $X$ on $Z$ ($b_{XZ}$)is, of course,
 gibberish, if interpreted causally. But how do the predicted $Y$ values from
 this model compare to the values predicted from the true DAG?
 
@@ -462,21 +462,22 @@ plot(p_dag_obs,
 ```
 
 Aside from seemingly being very good at predicting the $Y$ values, both models
-seem to make, for all practical intents and purposes (or just "ignoring random
-differences due to the stochastic nature of MCMC"), identical predictions.
+seem to make, for all practical intents and purposes, identical predictions.
+
+## Predicting the effects of interventions
 
 But what does this all mean for predicting the effects of interventions, as one
-would do using Pearl's *do*-calculus, which assume knowledge of the causal
- mechanism? According to Pearl
-[@pearlCausalInferenceStatistics2016] an intervention can be represented by a
-DAG from which all the arrows going into the intervened upon variable are
-removed. For example, here, we'll try predicting the effect of an intervention
+would do using Pearl's *do*-calculus, which assumes knowledge of the causal
+ mechanism? According to
+@pearlCausalInferenceStatistics2016 an intervention can be represented in a DAG
+by removing all arrows going into the intervened upon variable.
+For example, here, we'll try predicting the effect of an intervention
 that would set the value of $X$ to some $x$, denoted $do(X = x)$.
 Under such an intervention, our two competing DAGs would look like this:
 
 ```{dot fig_bn_x-confound}
 //| fig-align: center
-//| fig-cap: Causal DAGs when we simulate a $do(X = x)$ intervention. True DAG left, false DAG right.
+//| fig-cap: Causal DAGs when we simulate a $do(X = x)$ intervention. True DAG left, wrong DAG right.
 //| label: fig-simple-confounding-do-compare
 
 digraph G {
@@ -509,15 +510,16 @@ So, we could ask, for example, what is the expected value of the $Y$ variable if
 we were to conduct an intervention that would set the value of $X$ to 6. We are
 interested in $\text{E}(Y | do(X = 6))$.
 
-Given that we know the equations of the true data generating process, we can
-calculate this. We know that each $y$ value is a draw from a normal distribution
-with location $\mu_{y_i}$ and scale $1$. We further know that the value of
-$\mu_{y_i}$ is determined by the values which the variables $X$ and $Z$ take for
-a chosen $i$ (i.e. the values $X = x_i$ and $Z = z_i$).
+Given that we know the equations of the true-data generating process, we can
+calculate this. We know that each $y_i$ value is a draw from a normal
+distribution with location $\mu_{y_i}$ and scale $1$. We further know that the
+value of $\mu_{y_i}$ is determined by the values which the variables $X$ and $Z$
+take for a chosen $i$ (i.e. the values $X = x_i$ and $Z = z_i$).
 
-Since we've made the intervention $do(X = 6)$, we can just replace $x_i$ with
-$6$. However, we cannot just disregard the $Z$ variable, given that it is not
-independent of $Y$. Therefore, we will average over the $Z$ values.
+Since we've made the intervention $do(X = 6)$, our first step will be to replace
+$x_i$ with $6$ --- imagine that, somehow, we can intervene into reality and set
+$X = 6$ for each observation. Since the values of the $Z$ variable also
+influence the values of $Y$, we'll average over the $Z$ values.
 
 This was our starting model specification:
 
@@ -545,7 +547,7 @@ $Z$ is equal to $\mu_{y_i}$:
     \mu_{y_i} = \text{E}(Y | X, Z).
 \end{equation}
 
-Finally, given that we've set $X = 6$ through an intervention (and thus replaced
+Next, given that we've set $X = 6$ through an intervention (and thus replaced
 $x_i \sim \text{normal}(\mu_{x_i}, 1)$ with a constant), we have:
 
 \begin{equation}
@@ -561,7 +563,9 @@ Finally, we want to average over the values of $Z$ to get $\text{E}(Y | X)$:
                     &= \int_{z \in Z}(2 \times 6 + 4z)f_Z(z)\, \text{d}z.
 \end{align}
 
-We can use the `QuadGK.jl` package to calculate this expectation:
+We can use the `QuadGK.jl` package to calculate this expectation. Here, we'll
+rely on the fact that we know the distribution of $Z$, as we're looking for
+the effect of the intervention according to the true data-generating model.
 
 ```{julia}
 function integral(z)
@@ -575,8 +579,7 @@ QuadGK.quadgk(integral,
 ```
 
 To confirm that our calculation is correct, we'll also simulate a new set of $Y$
-values, with $X = 6$ (we'll rely on some of the variables created in the first
-simulation, and we'll increase the number of simulated draws):
+values, with $X = 6$:
 
 ```{julia}
 N_sim = 100000
@@ -599,12 +602,14 @@ mean(Y_x_fixed)
 As we can see, we're getting a very similar result. This gives us additional
 confidence that our calculation was correct.
 
+### Interventions according to the true DAG
+
 Now, what's the deal with the two models --- how do we obtain $\text{E}(Y | do(X
-= 6), Z)$? Let's first look at the model corresponding to the true
+= 6))$? Let's first look at the model corresponding to the true
 data-generating process. According to @pearlCausalInferenceStatistics2016, to
-estimate the causal effect an intervention on $X$ ($do(X = 6)$) would have on
-$Y$, we have to adjust for $X$'s parent variable $Z$.
-We do that the same way as when we were calculating the true expected value:
+estimate the causal effect an intervention on $X$ (in our case $do(X = 6)$)
+would have on $Y$, we have to adjust for $X$'s parent variable $Z$.
+We can do that the same way as when we were calculating the true expected value:
 
 \begin{align}
     \text{E}(Y | do(X = 6), Z) &= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
