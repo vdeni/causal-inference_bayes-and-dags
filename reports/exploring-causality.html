@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Denis Vlašiček">
-<meta name="dcterms.date" content="2022-07-08">
+<meta name="dcterms.date" content="2022-07-11">
 
 <title>Exploring causal inference with DAGs and Bayesian models</title>
 <style>
@@ -135,6 +135,7 @@ div.csl-indent {
   <li><a href="#predicting-the-effects-of-interventions" id="toc-predicting-the-effects-of-interventions" class="nav-link" data-scroll-target="#predicting-the-effects-of-interventions">Predicting the effects of interventions</a>
   <ul class="collapse">
   <li><a href="#interventions-according-to-the-true-dag" id="toc-interventions-according-to-the-true-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-true-dag">Interventions according to the true DAG</a></li>
+  <li><a href="#interventions-according-to-the-wrong-dag" id="toc-interventions-according-to-the-wrong-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -163,7 +164,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 8, 2022</p>
+      <p class="date">July 11, 2022</p>
     </div>
   </div>
     
@@ -328,7 +329,7 @@ Z-&gt;Y
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Z"</span> <span class="op">=&gt;</span> Z)</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="24">
 
 <div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>10.5775</td><td>3.24194</td><td>0.929417</td></tr><tr><th>2</th><td>13.7239</td><td>4.29011</td><td>1.53148</td></tr><tr><th>3</th><td>-1.27323</td><td>-0.874445</td><td>0.193148</td></tr><tr><th>4</th><td>38.1601</td><td>11.2986</td><td>3.45699</td></tr><tr><th>5</th><td>16.9501</td><td>4.62647</td><td>2.16487</td></tr><tr><th>6</th><td>10.6161</td><td>3.45576</td><td>1.26756</td></tr><tr><th>7</th><td>26.2414</td><td>7.90164</td><td>2.74993</td></tr><tr><th>8</th><td>0.779545</td><td>-0.624594</td><td>0.173979</td></tr><tr><th>9</th><td>-2.50255</td><td>-1.42419</td><td>-0.0427524</td></tr><tr><th>10</th><td>6.94653</td><td>2.12588</td><td>0.670866</td></tr></tbody></table></div>
 </div>
@@ -343,7 +344,7 @@ Z-&gt;Y
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="4">
+<div class="cell-output cell-output-display" data-execution_count="25">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X
@@ -364,7 +365,7 @@ X            3.17275    0.0153718  206.40    &lt;1e-99   3.14259    3.20292
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="6">
+<div class="cell-output cell-output-display" data-execution_count="27">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X + Z
@@ -409,7 +410,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
 <span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="7">
+<div class="cell-output cell-output-display" data-execution_count="28">
 <pre><code>gen_model_y_xz (generic function with 2 methods)</code></pre>
 </div>
 </div>
@@ -425,7 +426,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">4</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="8">
+<div class="cell-output cell-output-display" data-execution_count="29">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -465,7 +466,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="9">
+<div class="cell-output cell-output-display" data-execution_count="30">
 <pre><code>gen_model_y_xz_cauchy (generic function with 2 methods)</code></pre>
 </div>
 </div>
@@ -480,7 +481,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_cauchy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="10">
+<div class="cell-output cell-output-display" data-execution_count="31">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -584,7 +585,7 @@ X-&gt;Y
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
 <span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="11">
+<div class="cell-output cell-output-display" data-execution_count="32">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -640,7 +641,7 @@ X-&gt;Y
 <span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>     p_bn_obs,</span>
 <span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>     p_dag_bn,</span>
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>     layout <span class="op">=</span> (<span class="fl">3</span>, <span class="fl">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="12">
+<div class="cell-output cell-output-display" data-execution_count="33">
 <p><img src="exploring-causality_files/figure-html/cell-12-output-1.svg" class="img-fluid"></p>
 </div>
 </div>
@@ -758,7 +759,7 @@ Z2-&gt;Y2
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div class="cell-output cell-output-display" data-execution_count="34">
 <pre><code>(16.00000000532549, 1.706489217754166e-7)</code></pre>
 </div>
 </div>
@@ -779,7 +780,7 @@ Z2-&gt;Y2
 <span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>Y_x_fixed <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_x)</span>
 <span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_x_fixed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="14">
+<div class="cell-output cell-output-display" data-execution_count="35">
 <pre><code>15.970828611632337</code></pre>
 </div>
 </div>
@@ -789,7 +790,7 @@ Z2-&gt;Y2
 <p>Now, what’s the deal with the two models — how do we obtain <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span>? Let’s first look at the model corresponding to the true data-generating process.</p>
 <p>Our first step is to get from the <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> expression to <span class="math inline">\(\text{E}(Y | X = 6)\)</span>. The <span class="math inline">\(do(\cdot)\)</span> operator has special meaning in Pearl’s framework — it represents conducting an intervention that sets the value of one (or more) variables to some specific value. In our case, <span class="math inline">\(do(X = 6)\)</span> means conducting an intervention that sets all values of <span class="math inline">\(X\)</span> to 6. Therefore, within Pearl’s framework there’s a difference between <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> — which represents the expected value of the <span class="math inline">\(Y\)</span> variable if we were to <em>intervene</em> on <span class="math inline">\(X\)</span> so that all values of <span class="math inline">\(X\)</span> are set to 6 — and <span class="math inline">\(\text{E}(Y | X = 6)\)</span> — which is simply the expected value of <span class="math inline">\(Y\)</span> we <em>observe</em> for cases where <span class="math inline">\(X = 6\)</span>.</p>
 <p><span class="citation" data-cites="pearlCausalCalculusStatistical1996">Pearl (<a href="#ref-pearlCausalCalculusStatistical1996" role="doc-biblioref">1996</a>)</span> introduces a set of three rules, called the do-calculus, which allows us to transition from <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> to <span class="math inline">\(\text{E}(Y | X = 6)\)</span> if it’s possible given the DAG we’re relying on.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> According to these rules, we start with <span class="math inline">\(\text{E}(Y | do(X = 6), Z = z)\)</span> — according to our DAG, <span class="math inline">\(Y\)</span> depends both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>; it’s conditional on both. Furthermore, since we’re doing an intervention on <span class="math inline">\(X\)</span> we have <span class="math inline">\(do(X = 6)\)</span>; since we’re only observing the value of <span class="math inline">\(Z\)</span>, there’s no <span class="math inline">\(do(Z = z)\)</span> term, but only <span class="math inline">\(Z = z\)</span>.</p>
-<p>Since our goal is <span class="math inline">\(\text{E}(Y | X = 6)\)</span>, the first thing we’ll try doing is converting the <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span>. We’re allowed to do this if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span>, conditional on <span class="math inline">\(Z\)</span>, in a modified DAG where all arrows exiting <span class="math inline">\(X\)</span> are removed. This may be written as <span class="math inline">\((Y \perp X | Z)_{G_{\underline{X}}}\)</span>, where <span class="math inline">\(G_{\underline{X}}\)</span> stands for “graph where all arrows going out of <span class="math inline">\(X\)</span> are removed”. This graph is shown in Figure <a href="#fig-three-var-confounding-x-out-mutil">Figure&nbsp;5</a>.</p>
+<p>Since our goal is <span class="math inline">\(\text{E}(Y | X = 6)\)</span>, the first thing we’ll try doing is converting the <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span> — this would allow us to think about the effect of the intervention <span class="math inline">\(do(X = 6)\)</span> based on data which are not interventional (i.e.&nbsp;we haven’t actually collected data after making an intervention), but observational (we have just observed the world in a certain state). We’re allowed to do this if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span>, conditional on <span class="math inline">\(Z\)</span>, in a modified DAG where all arrows exiting <span class="math inline">\(X\)</span> are removed. This may be written as <span class="math inline">\((Y \perp X | Z)_{G_{\underline{X}}}\)</span>, where <span class="math inline">\(G_{\underline{X}}\)</span> stands for “graph where all arrows going out of <span class="math inline">\(X\)</span> are removed”. This graph is shown in Figure <a href="#fig-three-var-confounding-x-out-mutil">Figure&nbsp;5</a>.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-three-var-confounding-x-out-mutil" class="quarto-figure quarto-figure-center anchored">
@@ -833,53 +834,143 @@ Z-&gt;Y
 </div>
 </div>
 </div>
-<p>As we can seen, once we’ve removed the arrow <span class="math inline">\(X \textrightarrow Y\)</span>, and conditioning on <span class="math inline">\(Z\)</span>, <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> really are independent. Therefore, we can replace <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> with <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>. The final step is adjusting for <span class="math inline">\(Z\)</span>, since it’s confounding the causal relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. We do that by integrating over the values of <span class="math inline">\(Z\)</span>, which leads to the same set of equations we’ve had when looking at the expectation from the true data-generating process:</p>
+<p>As we can seen, once we’ve removed the arrow <span class="math inline">\(X \textrightarrow Y\)</span>, and conditioning on <span class="math inline">\(Z\)</span>, <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> really are independent. Therefore, we can replace <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> with <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>. The final step is adjusting for <span class="math inline">\(Z\)</span>, since it’s confounding the causal relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> <span class="citation" data-cites="pearlCausalInferenceStatistics2016">(<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">Pearl, Glymour, and Jewell 2016</a>)</span>. We do that by integrating over the values of <span class="math inline">\(Z\)</span>, which leads to a set of equations analogous to the one we’ve had when looking at the expectation from the true data-generating process. However, we’ll replace the hard-coded, true coefficient values, with our estimates:</p>
 <p><span class="math display">\[\begin{align}
     \text{E}(Y | do(X = 6), Z) &amp;= \text{E}(Y | X = 6, Z) \\
         &amp;= \text{E}(\text{E}(Y | X = 6)) \\
         &amp;= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
             \text{d}z \\
-        &amp;= \int_{z \in Z}(\beta_{YX} \times 6 +
-            \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
+        &amp;= \int_{z \in Z}(\hat{\beta}_{YX} \times 6 +
+            \hat{\beta}_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}\]</span></p>
-<p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\beta_{YX}\)</span> and <span class="math inline">\(\beta_{YZ}\)</span>, that is <span class="math inline">\(\beta_{YX} = 1.04\)</span> and <span class="math inline">\(\beta_{YZ} = 1.03\)</span></p>
+<p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\hat{\beta}_{XY}\)</span> and <span class="math inline">\(\hat{\beta}_{ZY}\)</span>, that is <span class="math inline">\(\beta_{XY} = 2.01\)</span> and <span class="math inline">\(\beta_{ZY} = 3.95\)</span></p>
 <div class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>b_yz <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>mu_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>s_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_yz <span class="op">*</span> z) <span class="op">*</span> Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="16">
-<pre><code>(7.240904641227938, 5.0022253316128684e-8)</code></pre>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">6</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>b_zy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">7</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(mu_Z, s_Z)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> z) <span class="op">*</span> Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="37">
+<pre><code>(16.141802104864944, 1.2496446976866825e-7)</code></pre>
 </div>
 </div>
-<p>Alternatively, instead of relying the fact the we know the distribution of <span class="math inline">\(Z\)</span>, we could do:</p>
+<p>Alternatively, we could do:</p>
 <div class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1</span> <span class="op">/</span> N <span class="op">*</span> <span class="fu">sum</span>(b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_yz <span class="op">*</span> Z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="17">
-<pre><code>7.27633284285349</code></pre>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1</span> <span class="op">/</span> N <span class="op">*</span> <span class="fu">sum</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="38">
+<pre><code>16.13842621712317</code></pre>
 </div>
 </div>
-<p>The results align perfectly with the one obtained from the true model, which could have been expected, given that we’ve estimated both <span class="math inline">\(\beta_{YX}\)</span> and <span class="math inline">\(\beta_{YZ}\)</span> correctly. So we basically just reran the previous calculation.</p>
-<p>Now for the second model. As we’ve mentioned earlier, no arrows get deleted in this model, as there are no arrows entering <span class="math inline">\(X\)</span>. This also means that we won’t be adjusting for <span class="math inline">\(Z\)</span> in this case (i.e.&nbsp;we won’t be integrating over the <span class="math inline">\(z\)</span> values). To obtain <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span>, we have</p>
-<p><span class="math display">\[\begin{align}
-    \text{E}(Y | do(X = 6), Z) &amp;= \text{E}(Y | X = 6, Z) \\
-        &amp;= \beta_{YX} \times 6 + \beta_{YZ} \times Z.
-\end{align}\]</span></p>
-<p>However, we have to be mindful of one thing: according to our model, <span class="math inline">\(Z\)</span> is under the direct influence of <span class="math inline">\(X\)</span>. Therefore, if <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span> through an intervention, <span class="math inline">\(Z\)</span> also changes. We have to keep that in mind if we want to get an estimate of the total causal effect <span class="math inline">\(X\)</span> has on <span class="math inline">\(Y\)</span> — both the direct effect, and the indirect effect going through <span class="math inline">\(Z\)</span>. So we’ll modify the previous equation, and mark the new variable as <span class="math inline">\(Z'\)</span>, keeping in mind that it represents the values that the <span class="math inline">\(Z\)</span> variable would obtain if the <span class="math inline">\(X\)</span> values were set to some <span class="math inline">\(x\)</span> (in our case, 6)<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<p>The results align almost perfectly with the one obtained from the true model, which could have been expected, given that we’ve estimated both <span class="math inline">\(\beta_{XY}\)</span> and <span class="math inline">\(\beta_{ZY}\)</span> approximately correctly. So we basically just reran the previous calculation.</p>
+</section>
+<section id="interventions-according-to-the-wrong-dag" class="level3">
+<h3 class="anchored" data-anchor-id="interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</h3>
+<p>Now for the second model. As we’ve mentioned earlier, no arrows get deleted in this model, as there are no arrows entering <span class="math inline">\(X\)</span>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-wrong-dag-interv" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+<path fill="none" stroke="black" d="M40.34,-33.82C48.86,-43.29 60.06,-55.73 69.67,-66.41"></path> <polygon fill="black" stroke="black" points="67.35,-69.06 76.64,-74.15 72.55,-64.38 67.35,-69.06"></polygon> </g> <!-- X&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 6: DAG of the intervention <span class="math inline">\(do(X = 6)\)</span> in the wrong DAG.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>To get the total causal effect of <span class="math inline">\(do(X = 6)\)</span> on <span class="math inline">\(Y\)</span>, we won’t adjust for <span class="math inline">\(Z\)</span> because that would close the indirect, <em>causal</em> path <span class="math inline">\(X \textrightarrow Z \textrightarrow Y\)</span>. If we were to adjust for <span class="math inline">\(Z\)</span>, we’d close off a part of the effect of the intervention, given that — according to this DAG — the value of <span class="math inline">\(X\)</span> also influences the value <span class="math inline">\(Z\)</span> will take on.</p>
+<p>Keeping that in mind, let’s again apply the rules of do-calculus to see if, and how, we can get from <span class="math inline">\(\text{E}(Y | do(X = 6, Z))\)</span> to <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>. Again, our first step will be to try to turn <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span>. According to the rules, we can do that if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span> when all of the arrows emanating from <span class="math inline">\(X\)</span> are removed from the graph (and, possibly, while adjusting for <span class="math inline">\(Z\)</span>). The mutilated graph looks like this:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-wrong-dag-interv-mutil" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+</g> <!-- X&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+X-&gt;Y
+</title>
+</g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 7: Wrong DAG with arrows leaving <span class="math inline">\(X\)</span> removed.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We see that, even without adjusting for <span class="math inline">\(Z\)</span>, <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are in no way connected in this graph; there are no arrows connecting <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> either directly or indirectly. Therefore, we conclude that <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent in such a graph (<span class="math inline">\((Y \perp X)_{G_{\underline{X}}}\)</span>), and so it is justified to replace <span class="math inline">\(do(X = 6)\)</span> with <span class="math inline">\(X = 6\)</span> in our expression.</p>
+<p>Can we remove <span class="math inline">\(Z\)</span> from <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>? Seemingly not. <span class="math inline">\(Z\)</span> would have to be independent of <span class="math inline">\(Y\)</span> in our original graph, which we cannot achieve, even if we were to condition on <span class="math inline">\(X\)</span> because <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span> are directly related. So we, again, end up with <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>.</p>
+<p>However, as mentioned earlier, we won’t be adjusting for <span class="math inline">\(Z\)</span> because its value is influenced by the value of <span class="math inline">\(X\)</span>; if <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span> through an intervention, <span class="math inline">\(Z\)</span> also changes. We have to keep that in mind if we want to get an estimate of the total causal effect <span class="math inline">\(X\)</span> has on <span class="math inline">\(Y\)</span>. So we’ll modify our expression, and mark the new variable as <span class="math inline">\(Z'\)</span>, keeping in mind that it represents the values that the <span class="math inline">\(Z\)</span> variable would obtain if the <span class="math inline">\(X\)</span> values were set to some <span class="math inline">\(x\)</span> (in our case, 6):<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> <span class="math inline">\(\text{E}(Y | do(X = 6), Z')\)</span>. According to our model,</p>
 <p><span class="math display">\[\begin{align}
     \text{E}(Y | do(X = 6), Z') &amp;= \text{E}(Y | X = 6, Z') \\
-        &amp;= \beta_{YX} \times 6 + \beta_{YZ} \times Z'.
+        &amp;= \beta_{XY} \times 6 + \beta_{ZY} \times Z'.
 \end{align}\]</span></p>
-<p>We also have to keep in mind that <span class="math inline">\(Z'\)</span> is a variable. So, to finally obtain the estimate of <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> we can simulate a set of <span class="math inline">\(Z'\)</span> values and calculate</p>
+<p>To obtain an estimate of <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> we can take our posterior estimates of <span class="math inline">\(\beta_{XY}\)</span> and <span class="math inline">\(\beta_{ZY}\)</span>, simulate a set of <span class="math inline">\(Z'\)</span> values, and calculate</p>
 <p><span class="math display">\[
-\frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 + \beta_{YZ} \times z'_i)
+\frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6 + \hat{\beta}_{ZY} \times z'_i)
 \]</span></p>
 <div class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>b_zx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">2</span>, <span class="op">:</span>mean]</span>
@@ -892,7 +983,7 @@ Z-&gt;Y
 <span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>                      <span class="fl">10_000</span>)</span>
 <span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_yz <span class="op">*</span> Z_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="18">
+<div class="cell-output cell-output-display" data-execution_count="39">
 <pre><code>12.638661549040547</code></pre>
 </div>
 </div>
@@ -912,7 +1003,7 @@ Z-&gt;Y
 <div class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#                   E(Z')</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_yz <span class="op">*</span> (b_zx <span class="op">*</span> <span class="fl">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="19">
+<div class="cell-output cell-output-display" data-execution_count="40">
 <pre><code>12.641425542194078</code></pre>
 </div>
 </div>
@@ -960,7 +1051,7 @@ Z-&gt;Y
 <div class="cell-output cell-output-display">
 <p><img src="exploring-causality_files/figure-html/cell-20-output-1.svg" class="img-fluid"></p>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="41">
 
 <div class="data-frame"><p>1 rows × 2 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y_dag_mean</th><th>Y_bn_mean</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>16.1387</td><td>19.4882</td></tr></tbody></table></div>
 </div>

@@ -629,12 +629,15 @@ intervention on $X$ we have $do(X = 6)$; since we're only observing the value of
 $Z$, there's no $do(Z = z)$ term, but only $Z = z$.
 
 Since our goal is $\text{E}(Y | X = 6)$, the first thing we'll try doing is
-converting the $do(X = 6)$ into $X = 6$. We're allowed to do this if $X$ is
-independent of $Y$, conditional on $Z$, in a modified DAG where all arrows
-exiting $X$ are removed. This may be written as
-$(Y \perp X | Z)_{G_{\underline{X}}}$, where $G_{\underline{X}}$ stands for
-"graph where all arrows going out of $X$ are removed". This graph is shown in
-Figure @fig-three-var-confounding-x-out-mutil.
+converting the $do(X = 6)$ into $X = 6$ --- this would allow us to think about
+the effect of the intervention $do(X = 6)$ based on data which are not
+interventional (i.e. we haven't actually collected data after making an
+intervention), but observational (we have just observed the world in a certain
+state). We're allowed to do this if $X$ is independent
+of $Y$, conditional on $Z$, in a modified DAG where all arrows exiting $X$ are
+removed. This may be written as $(Y \perp X | Z)_{G_{\underline{X}}}$, where
+$G_{\underline{X}}$ stands for "graph where all arrows going out of $X$ are
+removed". This graph is shown in Figure @fig-three-var-confounding-x-out-mutil.
 
 ```{dot fig_dag_effects}
 //| fig-cap: Graph with all arrows emanating from $X$ removed.
@@ -655,36 +658,41 @@ As we can seen, once we've removed the arrow $X \textrightarrow Y$, and
 conditioning on $Z$, $X$ and $Y$ really are independent. Therefore, we can
 replace $\text{E}(Y | do(X = 6), Z)$ with $\text{E}(Y | X = 6, Z)$. The final
 step is adjusting for $Z$, since it's confounding the causal relationship
-between $X$ and $Y$. We do that by integrating over the values of $Z$, which
-leads to the same set of equations we've had when looking at the expectation
-from the true data-generating process:
+between $X$ and $Y$ [@pearlCausalInferenceStatistics2016].
+We do that by integrating over the values of $Z$, which
+leads to a set of equations analogous to the one we've had when looking at the
+expectation from the true data-generating process. However, we'll replace the
+hard-coded, true coefficient values, with our estimates:
 
 \begin{align}
     \text{E}(Y | do(X = 6), Z) &= \text{E}(Y | X = 6, Z) \\
         &= \text{E}(\text{E}(Y | X = 6)) \\
         &= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
             \text{d}z \\
-        &= \int_{z \in Z}(\beta_{YX} \times 6 +
-            \beta_{YZ} \times z)f_Z(z)\, \text{d}z.
+        &= \int_{z \in Z}(\hat{\beta}_{YX} \times 6 +
+            \hat{\beta}_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}
 
 ```{julia}
 #| echo: false
 Markdown.parse("""Let's take the posterior means of the parameter estimates
-               for \$\\beta_{YX}\$ and \$\\beta_{YZ}\$, that is
-               \$\\beta_{YX} =
-               $(MCMCChains.summarystats(chains)[3, :mean] |> round_2)\$
-               and \$\\beta_{YZ} =
-               $(MCMCChains.summarystats(chains)[4, :mean] |> round_2)\$""")
+               for \$\\hat{\\beta}_{XY}\$ and \$\\hat{\\beta}_{ZY}\$, that is
+               \$\\beta_{XY} =
+               $(MCMCChains.summarystats(chains)[6, :mean] |> round_2)\$
+               and \$\\beta_{ZY} =
+               $(MCMCChains.summarystats(chains)[7, :mean] |> round_2)\$""")
 ```
 
 ```{julia}
-b_yx = MCMCChains.summarystats(chains)[3, :mean]
-b_yz = MCMCChains.summarystats(chains)[4, :mean]
+mu_Z = MCMCChains.summarystats(chains)[3, :mean]
+s_Z = MCMCChains.summarystats(chains)[4, :mean]
+
+b_xy = MCMCChains.summarystats(chains)[6, :mean]
+b_zy = MCMCChains.summarystats(chains)[7, :mean]
 
 function integral(z)
-    f_Z = Distributions.Normal(1, 1)
-    return (b_yx * 6 + b_yz * z) * Distributions.pdf(f_Z, z)
+    f_Z = Distributions.Normal(mu_Z, s_Z)
+    return (b_xy * 6 + b_zy * z) * Distributions.pdf(f_Z, z)
 end
 
 QuadGK.quadgk(integral,
@@ -692,76 +700,134 @@ QuadGK.quadgk(integral,
               Inf)
 ```
 
-Alternatively, instead of relying the fact the we know the distribution of $Z$,
-we could do:
+Alternatively, we could do:
 
 ```{julia}
-1 / N * sum(b_yx * 6 .+ b_yz * Z)
+1 / N * sum(b_xy * 6 .+ b_zy * Z)
 ```
 
-The results align perfectly with the one obtained from the true model, which
-could have been expected, given that we've estimated both $\beta_{YX}$ and
-$\beta_{YZ}$ correctly. So we basically just reran the previous calculation.
+The results align almost perfectly with the one obtained from the true model,
+which could have been expected, given that we've estimated both $\beta_{XY}$ and
+$\beta_{ZY}$ approximately correctly. So we basically just reran the previous
+calculation.
+
+### Interventions according to the wrong DAG
 
 Now for the second model. As we've mentioned earlier, no arrows get deleted
-in this model, as there are no arrows entering $X$. This also means that we
-won't be adjusting for $Z$ in this case (i.e. we won't be integrating over the
-$z$ values). To obtain $\text{E}(Y | do(X = 6), Z)$, we have
+in this model, as there are no arrows entering $X$.
 
-\begin{align}
-    \text{E}(Y | do(X = 6), Z) &= \text{E}(Y | X = 6, Z) \\
-        &= \beta_{YX} \times 6 + \beta_{YZ} \times Z.
-\end{align}
+```{dot fig_bn_x-confound}
+//| fig-align: center
+//| fig-cap: DAG of the intervention $do(X = 6)$ in the wrong DAG.
+//| label: fig-simple-confounding-wrong-dag-interv
 
-However, we have to be mindful of one thing: according to our model, $Z$ is
-under the direct influence of $X$. Therefore, if $X$ is set to some value $x$
-through an intervention, $Z$ also changes. We have to keep that in mind if we
-want to get an estimate of the total causal effect $X$ has on $Y$ --- both the
-direct effect, and the indirect effect going through $Z$. So we'll modify the
-previous equation, and mark the new variable as $Z'$, keeping in mind that it
-represents the values that the $Z$ variable would obtain if the $X$ values
-were set to some $x$ (in our case, 6)[^counterfactuals].
+digraph G {
+    layout=dot;
+    rankdir=TB;
+    Z[label="Z"];
+    X[label="X"];
+    Y[label="Y"];
+    Z -> Y;
+    X -> Z;
+    X -> Y[minlen=4];
+    {rank="same"; X; Y;}
+}
+```
+
+To get the total causal effect of $do(X = 6)$ on $Y$, we won't adjust for $Z$
+because that would close the indirect, *causal* path $X \textrightarrow Z
+\textrightarrow Y$. If we were to adjust for $Z$, we'd close off a part of the
+effect of the intervention, given that --- according to this DAG --- the value
+of $X$ also influences the value $Z$ will take on.
+
+Keeping that in mind, let's again apply the rules of do-calculus to see if, and
+how, we can get from $\text{E}(Y | do(X = 6, Z))$ to $\text{E}(Y | X = 6, Z)$.
+Again, our first step will be to try to turn $do(X = 6)$ into $X = 6$. According
+to the rules, we can do that if $X$ is independent of $Y$ when all of the arrows
+emanating from $X$ are removed from the graph (and, possibly, while adjusting
+for $Z$). The mutilated graph looks like this:
+
+```{dot fig_bn_x-confound}
+//| fig-align: center
+//| fig-cap: Wrong DAG with arrows leaving $X$ removed.
+//| label: fig-simple-confounding-wrong-dag-interv-mutil
+
+digraph G {
+    layout=dot;
+    rankdir=TB;
+    Z[label="Z"];
+    X[label="X"];
+    Y[label="Y"];
+    Z -> Y;
+    X -> Z[style="invisible"; arrowhead="none"];
+    X -> Y[minlen=4; style="invisible"; arrowhead="none"];
+    {rank="same"; X; Y;}
+}
+```
+
+We see that, even without adjusting for $Z$, $X$ and $Y$ are in no way connected
+in this graph; there are no arrows connecting $X$ and $Y$ either directly or
+indirectly. Therefore, we conclude that $X$ and $Y$ are independent in such a
+graph ($(Y \perp X)_{G_{\underline{X}}}$), and so it is justified to replace
+$do(X = 6)$ with $X = 6$ in our expression.
+
+Can we remove $Z$ from $\text{E}(Y | X = 6, Z)$? Seemingly not. $Z$ would have
+to be independent of $Y$ in our original graph, which we cannot achieve, even if
+we were to condition on $X$ because $Z$ and $Y$ are directly related. So we,
+again, end up with $\text{E}(Y | X = 6, Z)$.
+
+However, as mentioned earlier, we won't be adjusting for $Z$ because its value
+is influenced by the value of $X$; if $X$ is set to some value $x$ through an
+intervention, $Z$ also changes. We have to keep that in mind if we want to get
+an estimate of the total causal effect $X$ has on $Y$. So we'll modify our
+expression, and mark the new variable as $Z'$, keeping in mind that it
+represents the values that the $Z$ variable would obtain if the $X$ values were
+set to some $x$ (in our case, 6):[^counterfactuals]
+$\text{E}(Y | do(X = 6), Z')$. According to our model,
 
 \begin{align}
     \text{E}(Y | do(X = 6), Z') &= \text{E}(Y | X = 6, Z') \\
-        &= \beta_{YX} \times 6 + \beta_{YZ} \times Z'.
+        &= \beta_{XY} \times 6 + \beta_{ZY} \times Z'.
 \end{align}
 
-We also have to keep in mind that $Z'$ is a variable. So, to finally obtain the
-estimate of $\text{E}(Y | do(X = 6), Z)$ we can simulate a set of $Z'$ values
-and calculate
+To obtain an estimate of $\text{E}(Y | do(X = 6), Z)$ we can take our posterior
+estimates of $\beta_{XY}$ and $\beta_{ZY}$, simulate a
+set of $Z'$ values, and calculate
 
 $$
-\frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 + \beta_{YZ} \times z'_i)
+    \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6 +
+        \hat{\beta}_{ZY} \times z'_i)
 $$
 
 ```{julia}
-b_zx = MCMCChains.summarystats(chains_x_conf)[2, :mean]
-b_yx = MCMCChains.summarystats(chains_x_conf)[3, :mean]
-b_yz = MCMCChains.summarystats(chains_x_conf)[4, :mean]
+s_Z = MCMCChains.summarystats(chains_x_conf)[4, :mean]
 
-Z_prime_distr = Distributions.Normal(b_zx * 6, 1)
+b_xz = MCMCChains.summarystats(chains_x_conf)[5, :mean]
+b_xy = MCMCChains.summarystats(chains_x_conf)[6, :mean]
+b_zy = MCMCChains.summarystats(chains_x_conf)[7, :mean]
+
+Z_prime_distr = Distributions.Normal(b_xz * 6, s_Z)
 
 Z_prime = Random.rand(Z_prime_distr,
                       10_000)
 
-mean(b_yx * 6 .+ b_yz * Z_prime)
+mean(b_xy * 6 .+ b_zy * Z_prime)
 ```
 
 Alternatively, if we rearrange the previous equation, we'll notice that we're
 really working with the expected value of the $Z'$ variable:
 
 \begin{align}
-    \text{E}(Y | X = 6, Z') &= \frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 +
-        \beta_{YZ} \times z'_i) \\
-    &= \beta_{YX} \times 6 + \beta_{YZ} \times
+    \text{E}(Y | X = 6, Z') &= \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6
+        + \hat{\beta}_{ZY} \times z'_i) \\
+    &= \hat{\beta}_{XY} \times 6 + \hat{\beta}_{ZY} \times
         \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z')}}.
 \end{align}
 
 According to our model, that is:
 
 $$
-    \text{E}(Z') = \mu_{z'_i} = \beta_ZX \times x_i,\; \text{where}\;
+    \text{E}(Z') = \mu_{z'_i} = \beta_{XZ} \times x_i,\; \text{where}\;
         x_i = 6\; \forall\, i
 $$
 
@@ -770,7 +836,7 @@ $Y$ like this:
 
 ```{julia}
 #                   E(Z')
-b_yx * 6 + b_yz * (b_zx * 6)
+b_xy * 6 + b_zy * (b_xz * 6)
 ```
 
 Here, we get an estimate of the total causal effect of $X$ on $Y$ that's clearly
