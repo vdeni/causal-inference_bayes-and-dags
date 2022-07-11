@@ -414,7 +414,7 @@ MCMCChains.summarystats(chains_x_conf)
 ```
 
 So, the estimates for $b_{XY}$ and $b_{ZY}$ are actually quite fine.
-The coefficient for the effect of $X$ on $Z$ ($b_{XZ}$)is, of course,
+The coefficient for the effect of $X$ on $Z$ ($b_{XZ}$) is, of course,
 gibberish, if interpreted causally. But how do the predicted $Y$ values from
 this model compare to the values predicted from the true DAG?
 
@@ -677,9 +677,9 @@ hard-coded, true coefficient values, with our estimates:
 #| echo: false
 Markdown.parse("""Let's take the posterior means of the parameter estimates
                for \$\\hat{b}_{XY}\$ and \$\\hat{b}_{ZY}\$, that is
-               \$b{XY} =
+               \$b_{XY} =
                $(MCMCChains.summarystats(chains)[6, :mean] |> round_2)\$
-               and \$b{ZY} =
+               and \$b_{ZY} =
                $(MCMCChains.summarystats(chains)[7, :mean] |> round_2)\$""")
 ```
 
@@ -707,8 +707,8 @@ Alternatively, we could do:
 ```
 
 The results align almost perfectly with the one obtained from the true model,
-which could have been expected, given that we've estimated both $b{XY}$ and
-$b{ZY}$ approximately correctly. So we basically just reran the previous
+which could have been expected, given that we've estimated both $b_{XY}$ and
+$b_{ZY}$ approximately correctly. So we basically just reran the previous
 calculation.
 
 ### Interventions according to the wrong DAG
@@ -791,7 +791,7 @@ $\text{E}(Y | do(X = 6), Z')$. According to our model,
 \end{align}
 
 To obtain an estimate of $\text{E}(Y | do(X = 6), Z)$ we can take our posterior
-estimates of $b{XY}$ and $b{ZY}$, simulate a
+estimates of $b_{XY}$ and $b_{ZY}$, simulate a
 set of $Z'$ values, and calculate
 
 $$
@@ -827,7 +827,7 @@ really working with the expected value of the $Z'$ variable:
 According to our model, that is:
 
 $$
-    \text{E}(Z') = \mu_{z'_i} = b{XZ} \times x_i,\; \text{where}\;
+    \text{E}(Z') = \mu_{z'_i} = b_{XZ} \times x_i,\; \text{where}\;
         x_i = 6\; \forall\, i
 $$
 
@@ -932,10 +932,32 @@ According to our model specification:
 
 \begin{align}
     \text{E}(Y | X = x, Z = z) &= \mu_{y_i} \\
-        &= b{XY} x_i + b{ZY} z_i \\
-    p(Z = z | X = 0) = normal(Z = z | \mu_{z_i}, \sigma_Z) \\
-        &= normal(Z = z | b_{XZ} x_i, \sigma_Z)
+        &= b_{XY} x_i + b_{ZY} z_i \\
+    p(Z = z | X = 0) &= \text{normal}(Z = z | \mu_{z_i}, \sigma_Z) \\
+        &= \text{normal}(Z = z | b_{XZ} x_i, \sigma_Z)
 \end{align}
+
+We can, again, code this using `QuadGK`, plugging in our posterior estimates of
+the parameter values:
+
+```{julia}
+function integral(z)
+    f_Z = Distributions.Normal(b_xz * 0, s_Z)
+    out = ((b_xy * 6 + b_zy * z) - (b_xy * 0 + b_zy * z)) *
+        Distributions.pdf(f_Z, z)
+end
+
+QuadGK.quadgk(integral,
+              -Inf,
+              Inf)
+```
+
+Alternatively, we could calculate
+
+$$
+\frac{1}{N} \sum_z [\text{E}(Y | X = 6, Z = z) - \text{E}(Y | X = 0, Z = z)]
+    \times p(Z = z | X = 0)
+$$
 
 ### A less scary way to compute
 

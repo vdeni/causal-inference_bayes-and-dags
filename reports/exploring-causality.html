@@ -330,7 +330,7 @@ Z-&gt;Y
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Z"</span> <span class="op">=&gt;</span> Z)</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="22">
+<div class="cell-output cell-output-display" data-execution_count="24">
 
 <div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>10.5775</td><td>3.24194</td><td>0.929417</td></tr><tr><th>2</th><td>13.7239</td><td>4.29011</td><td>1.53148</td></tr><tr><th>3</th><td>-1.27323</td><td>-0.874445</td><td>0.193148</td></tr><tr><th>4</th><td>38.1601</td><td>11.2986</td><td>3.45699</td></tr><tr><th>5</th><td>16.9501</td><td>4.62647</td><td>2.16487</td></tr><tr><th>6</th><td>10.6161</td><td>3.45576</td><td>1.26756</td></tr><tr><th>7</th><td>26.2414</td><td>7.90164</td><td>2.74993</td></tr><tr><th>8</th><td>0.779545</td><td>-0.624594</td><td>0.173979</td></tr><tr><th>9</th><td>-2.50255</td><td>-1.42419</td><td>-0.0427524</td></tr><tr><th>10</th><td>6.94653</td><td>2.12588</td><td>0.670866</td></tr></tbody></table></div>
 </div>
@@ -345,7 +345,7 @@ Z-&gt;Y
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="23">
+<div class="cell-output cell-output-display" data-execution_count="25">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X
@@ -366,7 +366,7 @@ X            3.17275    0.0153718  206.40    &lt;1e-99   3.14259    3.20292
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="25">
+<div class="cell-output cell-output-display" data-execution_count="27">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X + Z
@@ -411,7 +411,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
 <span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="26">
+<div class="cell-output cell-output-display" data-execution_count="28">
 <pre><code>gen_model_y_xz (generic function with 2 methods)</code></pre>
 </div>
 </div>
@@ -427,7 +427,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">4</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="27">
+<div class="cell-output cell-output-display" data-execution_count="29">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -467,7 +467,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="28">
+<div class="cell-output cell-output-display" data-execution_count="30">
 <pre><code>gen_model_y_xz_cauchy (generic function with 2 methods)</code></pre>
 </div>
 </div>
@@ -482,7 +482,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_cauchy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="29">
+<div class="cell-output cell-output-display" data-execution_count="31">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -586,7 +586,7 @@ X-&gt;Y
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
 <span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="30">
+<div class="cell-output cell-output-display" data-execution_count="32">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -642,7 +642,7 @@ X-&gt;Y
 <span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>     p_bn_obs,</span>
 <span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>     p_dag_bn,</span>
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>     layout <span class="op">=</span> (<span class="fl">3</span>, <span class="fl">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="31">
+<div class="cell-output cell-output-display" data-execution_count="33">
 <p><img src="exploring-causality_files/figure-html/cell-12-output-1.svg" class="img-fluid"></p>
 </div>
 </div>
@@ -760,7 +760,7 @@ Z2-&gt;Y2
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="32">
+<div class="cell-output cell-output-display" data-execution_count="34">
 <pre><code>(16.00000000532549, 1.706489217754166e-7)</code></pre>
 </div>
 </div>
@@ -781,7 +781,7 @@ Z2-&gt;Y2
 <span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>Y_x_fixed <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_x)</span>
 <span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_x_fixed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="33">
+<div class="cell-output cell-output-display" data-execution_count="35">
 <pre><code>15.970828611632337</code></pre>
 </div>
 </div>
@@ -841,10 +841,10 @@ Z-&gt;Y
         &amp;= \text{E}(\text{E}(Y | X = 6)) \\
         &amp;= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
             \text{d}z \\
-        &amp;= \int_{z \in Z}(\hat{\beta}_{YX} \times 6 +
-            \hat{\beta}_{YZ} \times z)f_Z(z)\, \text{d}z.
+        &amp;= \int_{z \in Z}(\hat{b}_{YX} \times 6 +
+            \hat{b}_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}\]</span></p>
-<p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\hat{\beta}_{XY}\)</span> and <span class="math inline">\(\hat{\beta}_{ZY}\)</span>, that is <span class="math inline">\(\beta_{XY} = 2.01\)</span> and <span class="math inline">\(\beta_{ZY} = 3.95\)</span></p>
+<p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\hat{b}_{XY}\)</span> and <span class="math inline">\(\hat{b}_{ZY}\)</span>, that is <span class="math inline">\(b{XY} = 2.01\)</span> and <span class="math inline">\(b{ZY} = 3.95\)</span></p>
 <div class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>mu_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>s_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
@@ -860,18 +860,18 @@ Z-&gt;Y
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
 <span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="35">
+<div class="cell-output cell-output-display" data-execution_count="37">
 <pre><code>(16.141802104864944, 1.2496446976866825e-7)</code></pre>
 </div>
 </div>
 <p>Alternatively, we could do:</p>
 <div class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1</span> <span class="op">/</span> N <span class="op">*</span> <span class="fu">sum</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="36">
+<div class="cell-output cell-output-display" data-execution_count="38">
 <pre><code>16.13842621712317</code></pre>
 </div>
 </div>
-<p>The results align almost perfectly with the one obtained from the true model, which could have been expected, given that we’ve estimated both <span class="math inline">\(\beta_{XY}\)</span> and <span class="math inline">\(\beta_{ZY}\)</span> approximately correctly. So we basically just reran the previous calculation.</p>
+<p>The results align almost perfectly with the one obtained from the true model, which could have been expected, given that we’ve estimated both <span class="math inline">\(b{XY}\)</span> and <span class="math inline">\(b{ZY}\)</span> approximately correctly. So we basically just reran the previous calculation.</p>
 </section>
 <section id="interventions-according-to-the-wrong-dag" class="level3">
 <h3 class="anchored" data-anchor-id="interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</h3>
@@ -967,12 +967,12 @@ X-&gt;Y
 <p>However, as mentioned earlier, we won’t be adjusting for <span class="math inline">\(Z\)</span> because its value is influenced by the value of <span class="math inline">\(X\)</span>; if <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span> through an intervention, <span class="math inline">\(Z\)</span> also changes. We have to keep that in mind if we want to get an estimate of the total causal effect <span class="math inline">\(X\)</span> has on <span class="math inline">\(Y\)</span>. So we’ll modify our expression, and mark the new variable as <span class="math inline">\(Z'\)</span>, keeping in mind that it represents the values that the <span class="math inline">\(Z\)</span> variable would obtain if the <span class="math inline">\(X\)</span> values were set to some <span class="math inline">\(x\)</span> (in our case, 6):<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> <span class="math inline">\(\text{E}(Y | do(X = 6), Z')\)</span>. According to our model,</p>
 <p><span class="math display">\[\begin{align}
     \text{E}(Y | do(X = 6), Z') &amp;= \text{E}(Y | X = 6, Z') \\
-        &amp;= \beta_{XY} \times 6 + \beta_{ZY} \times Z'.
+        &amp;= b{XY} \times 6 + b{ZY} \times Z'.
 \end{align}\]</span></p>
-<p>To obtain an estimate of <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> we can take our posterior estimates of <span class="math inline">\(\beta_{XY}\)</span> and <span class="math inline">\(\beta_{ZY}\)</span>, simulate a set of <span class="math inline">\(Z'\)</span> values, and calculate</p>
+<p>To obtain an estimate of <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> we can take our posterior estimates of <span class="math inline">\(b{XY}\)</span> and <span class="math inline">\(b{ZY}\)</span>, simulate a set of <span class="math inline">\(Z'\)</span> values, and calculate</p>
 <p><span class="math display">\[
-    \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6 +
-        \hat{\beta}_{ZY} \times z'_i)
+    \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6 +
+        \hat{b}_{ZY} \times z'_i)
 \]</span></p>
 <div class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>s_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
@@ -987,27 +987,27 @@ X-&gt;Y
 <span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                      <span class="fl">10_000</span>)</span>
 <span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="37">
+<div class="cell-output cell-output-display" data-execution_count="39">
 <pre><code>19.476563750991136</code></pre>
 </div>
 </div>
 <p>Alternatively, if we rearrange the previous equation, we’ll notice that we’re really working with the expected value of the <span class="math inline">\(Z'\)</span> variable:</p>
 <p><span class="math display">\[\begin{align}
-    \text{E}(Y | X = 6, Z') &amp;= \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6
-        + \hat{\beta}_{ZY} \times z'_i) \\
-    &amp;= \hat{\beta}_{XY} \times 6 + \hat{\beta}_{ZY} \times
+    \text{E}(Y | X = 6, Z') &amp;= \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6
+        + \hat{b}_{ZY} \times z'_i) \\
+    &amp;= \hat{b}_{XY} \times 6 + \hat{b}_{ZY} \times
         \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z')}}.
 \end{align}\]</span></p>
 <p>According to our model, that is:</p>
 <p><span class="math display">\[
-    \text{E}(Z') = \mu_{z'_i} = \beta_{XZ} \times x_i,\; \text{where}\;
+    \text{E}(Z') = \mu_{z'_i} = b{XZ} \times x_i,\; \text{where}\;
         x_i = 6\; \forall\, i
 \]</span></p>
 <p>meaning that we can also estimate the total causal effect of <span class="math inline">\(do(X = x)\)</span> on <span class="math inline">\(Y\)</span> like this:</p>
 <div class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#                   E(Z')</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> (b_xz <span class="op">*</span> <span class="fl">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="38">
+<div class="cell-output cell-output-display" data-execution_count="40">
 <pre><code>19.487497126823868</code></pre>
 </div>
 </div>
@@ -1073,58 +1073,78 @@ X-&gt;Y
 <p>According to our model specification:</p>
 <p><span class="math display">\[\begin{align}
     \text{E}(Y | X = x, Z = z) &amp;= \mu_{y_i} \\
-        &amp;= \beta_{XY} x_i + \beta_{ZY} z_i \q
-    p(Z = z | X = 0) = normal(Z = z | \mu_{z_i}, \sigma_Z) \\
-        &amp;= normal(Z = z | b_{XZ} x_i, \sigma_Z)
+        &amp;= b{XY} x_i + b{ZY} z_i \\
+    p(Z = z | X = 0) = \text{normal}(Z = z | \mu_{z_i}, \sigma_Z) \\
+        &amp;= \text{normal}(Z = z | b_{XZ} x_i, \sigma_Z)
 \end{align}\]</span></p>
+<p>We can, again, code this using <code>QuadGK</code>, plugging in our posterior estimates of the parameter values:</p>
+<div class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">0</span>, s_Z)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> ((b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> z) <span class="op">-</span> (b_xy <span class="op">*</span> <span class="fl">0</span> <span class="op">+</span> b_zy <span class="op">*</span> z)) <span class="op">*</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>        Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="41">
+<pre><code>(12.044197846077513, 1.2915591943083213e-7)</code></pre>
+</div>
+</div>
+<p>Alternatively, we could calculate</p>
+<p><span class="math display">\[
+\frac{1}{N} \sum_z [\text{E}(Y | X = 6, Z = z) - \text{E}(Y | X = 0, Z = z)]
+    \times p(Z = z | X = 0)
+\]</span></p>
 </section>
 </section>
 <section id="a-less-scary-way-to-compute" class="level3">
 <h3 class="anchored" data-anchor-id="a-less-scary-way-to-compute">A less scary way to compute</h3>
-<div class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(<span class="fu">fill</span>(<span class="fl">6</span>,</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz <span class="op">=</span> <span class="fu">bn_model_y_xz</span>(<span class="fu">fill</span>(<span class="fl">6</span>,</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>                                        N))</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz,</span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>                          chains_x_conf)</span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>y_hat_bn_summary <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(y_hat_bn) <span class="op">|&gt;</span></span>
-<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    DataFrames.DataFrame</span>
-<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>y_hat_bn_summary <span class="op">=</span> <span class="fu">transform</span>(y_hat_bn_summary,</span>
-<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>                             <span class="op">:</span>parameters <span class="op">=&gt;</span> x <span class="op">-&gt;</span> <span class="fu">String</span>.(x);</span>
-<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>                             copycols<span class="op">=</span><span class="cn">false</span>,</span>
-<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>                             renamecols<span class="op">=</span><span class="cn">false</span>)</span>
-<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>y_hat_bn_summary <span class="op">=</span> <span class="fu">subset</span>(y_hat_bn_summary,</span>
-<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>                          <span class="op">:</span>parameters <span class="op">=&gt;</span> x <span class="op">-&gt;</span> <span class="fu">contains</span>.(x, <span class="st">r"^Y"</span>))</span>
-<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
-<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
-<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span> y_hat_bn_summary[<span class="op">:</span>, <span class="op">:</span>mean])</span>
-<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn) <span class="op">|&gt;</span> display</span>
-<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>DataFrames.<span class="fu">combine</span>(d_dag_bn,</span>
-<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a>                   DataFrames.<span class="fu">All</span>() <span class="op">.=&gt;</span> mean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(<span class="fu">fill</span>(<span class="fl">6</span>,</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz <span class="op">=</span> <span class="fu">bn_model_y_xz</span>(<span class="fu">fill</span>(<span class="fl">6</span>,</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>                                        N))</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz,</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>                          chains_x_conf)</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>y_hat_bn_summary <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(y_hat_bn) <span class="op">|&gt;</span></span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>    DataFrames.DataFrame</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>y_hat_bn_summary <span class="op">=</span> <span class="fu">transform</span>(y_hat_bn_summary,</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>                             <span class="op">:</span>parameters <span class="op">=&gt;</span> x <span class="op">-&gt;</span> <span class="fu">String</span>.(x);</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>                             copycols<span class="op">=</span><span class="cn">false</span>,</span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>                             renamecols<span class="op">=</span><span class="cn">false</span>)</span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>y_hat_bn_summary <span class="op">=</span> <span class="fu">subset</span>(y_hat_bn_summary,</span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a>                          <span class="op">:</span>parameters <span class="op">=&gt;</span> x <span class="op">-&gt;</span> <span class="fu">contains</span>.(x, <span class="st">r"^Y"</span>))</span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span> y_hat_bn_summary[<span class="op">:</span>, <span class="op">:</span>mean])</span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a><span class="fu">compare_yhat</span>(d_dag_bn) <span class="op">|&gt;</span> display</span>
+<span id="cb29-37"><a href="#cb29-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-38"><a href="#cb29-38" aria-hidden="true" tabindex="-1"></a>DataFrames.<span class="fu">combine</span>(d_dag_bn,</span>
+<span id="cb29-39"><a href="#cb29-39" aria-hidden="true" tabindex="-1"></a>                   DataFrames.<span class="fu">All</span>() <span class="op">.=&gt;</span> mean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="exploring-causality_files/figure-html/cell-20-output-1.svg" class="img-fluid"></p>
+<p><img src="exploring-causality_files/figure-html/cell-21-output-1.svg" class="img-fluid"></p>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="39">
+<div class="cell-output cell-output-display" data-execution_count="42">
 
 <div class="data-frame"><p>1 rows × 2 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y_dag_mean</th><th>Y_bn_mean</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>16.1387</td><td>19.4882</td></tr></tbody></table></div>
 </div>
