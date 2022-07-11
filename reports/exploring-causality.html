@@ -136,6 +136,7 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#interventions-according-to-the-true-dag" id="toc-interventions-according-to-the-true-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-true-dag">Interventions according to the true DAG</a></li>
   <li><a href="#interventions-according-to-the-wrong-dag" id="toc-interventions-according-to-the-wrong-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</a></li>
+  <li><a href="#a-less-scary-way-to-compute" id="toc-a-less-scary-way-to-compute" class="nav-link" data-scroll-target="#a-less-scary-way-to-compute">A less scary way to compute</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -220,9 +221,9 @@ Z-&gt;Y
 </div>
 </div>
 </div>
-<p>In the graph pictured in Figure <a href="#fig-three-var-confounding">Figure&nbsp;1</a> there are two paths between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y.\)</span> The first path is the direct one, going from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span> (<span class="math inline">\(X \textrightarrow Y\)</span>). The second path is an indirect one, and goes over the <span class="math inline">\(Z\)</span> variable: <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>.</p>
+<p>In the graph pictured in <a href="#fig-three-var-confounding">Figure&nbsp;1</a> there are two paths between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y.\)</span> The first path is the direct one, going from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span> (<span class="math inline">\(X \textrightarrow Y\)</span>). The second path is an indirect one, and goes over the <span class="math inline">\(Z\)</span> variable: <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>.</p>
 <p>I’ve mentioned earlier that the direction of the arrows tells us the direction of the causal effects. Therefore, we can say that the path <span class="math inline">\(X \textrightarrow Y\)</span> is causal. However, the path <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span> is not a causal path — starting from the left, we have an arrow going into <span class="math inline">\(X\)</span> from <span class="math inline">\(Z\)</span>, and then an arrow going from <span class="math inline">\(Z\)</span> into <span class="math inline">\(Y\)</span>. Since this path starts with an arrow pointing <em>into</em> <span class="math inline">\(X\)</span>, this makes it a <em>backdoor path</em> between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>.</p>
-<p>The idea of backdoor paths is one of the central ideas in Pearl’s framework. Backdoor paths are not causal, but create problems when trying to estimate causal effects. In the graph in Figure <a href="#fig-three-var-confounding">Figure&nbsp;1</a>, we’d have to somehow close the backdoor path in order to obtain an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. In this case, the path can be close by adjusting for the <span class="math inline">\(Z\)</span> variable. We’ll see how to do that in a bit.</p>
+<p>The idea of backdoor paths is one of the central ideas in Pearl’s framework. Backdoor paths are not causal, but create problems when trying to estimate causal effects. In the graph in <a href="#fig-three-var-confounding">Figure&nbsp;1</a>, we’d have to somehow close the backdoor path in order to obtain an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. In this case, the path can be close by adjusting for the <span class="math inline">\(Z\)</span> variable. We’ll see how to do that in a bit.</p>
 <p>I’ll first set up the Julia environment and simulate some values for the variables <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span>.</p>
 <div class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Pkg</span></span>
@@ -329,7 +330,7 @@ Z-&gt;Y
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Z"</span> <span class="op">=&gt;</span> Z)</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="24">
+<div class="cell-output cell-output-display" data-execution_count="22">
 
 <div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>10.5775</td><td>3.24194</td><td>0.929417</td></tr><tr><th>2</th><td>13.7239</td><td>4.29011</td><td>1.53148</td></tr><tr><th>3</th><td>-1.27323</td><td>-0.874445</td><td>0.193148</td></tr><tr><th>4</th><td>38.1601</td><td>11.2986</td><td>3.45699</td></tr><tr><th>5</th><td>16.9501</td><td>4.62647</td><td>2.16487</td></tr><tr><th>6</th><td>10.6161</td><td>3.45576</td><td>1.26756</td></tr><tr><th>7</th><td>26.2414</td><td>7.90164</td><td>2.74993</td></tr><tr><th>8</th><td>0.779545</td><td>-0.624594</td><td>0.173979</td></tr><tr><th>9</th><td>-2.50255</td><td>-1.42419</td><td>-0.0427524</td></tr><tr><th>10</th><td>6.94653</td><td>2.12588</td><td>0.670866</td></tr></tbody></table></div>
 </div>
@@ -344,7 +345,7 @@ Z-&gt;Y
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="25">
+<div class="cell-output cell-output-display" data-execution_count="23">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X
@@ -365,7 +366,7 @@ X            3.17275    0.0153718  206.40    &lt;1e-99   3.14259    3.20292
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="27">
+<div class="cell-output cell-output-display" data-execution_count="25">
 <pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
 
 Y ~ 1 + X + Z
@@ -385,7 +386,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <section id="bayesian-networks-generative-models-and-whatnot" class="level2">
 <h2 class="anchored" data-anchor-id="bayesian-networks-generative-models-and-whatnot">Bayesian networks, generative models and whatnot</h2>
 <p>Okay, now to the part that’s a bit more tricky. I want to explore the relationships between Bayesian networks and causal directed acyclic graphs. If my understanding is correct, a Bayesian network is, in a way, a subset of a causal directed acyclic graph — it encodes the relationships between the variables under investigation, but doesn’t make additional assumptions which are necessary for causal inference. However, a Bayesian network that corresponds to the true DAG should be able to provide us with unbiased estimates of the causal effects. A Bayesian network that does not correspond to the true DAG, on the other hand, should provide biased estimates of the causal effects, but should still be able to make accurate predictions. This may be a fine distinction, and is something I also aim to explore further down.</p>
-<p>I’ll fit the model represented in Figure <a href="#fig-three-var-confounding-effs">Figure&nbsp;2</a> using the <code>Turing.jl</code> library. The model can be coded as follows:</p>
+<p>I’ll fit the model represented in <a href="#fig-three-var-confounding-effs">Figure&nbsp;2</a> using the <code>Turing.jl</code> library. The model can be coded as follows:</p>
 <div class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz</span>(X,</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                                      Y,</span>
@@ -410,7 +411,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
 <span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="28">
+<div class="cell-output cell-output-display" data-execution_count="26">
 <pre><code>gen_model_y_xz (generic function with 2 methods)</code></pre>
 </div>
 </div>
@@ -426,7 +427,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">4</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="29">
+<div class="cell-output cell-output-display" data-execution_count="27">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -466,7 +467,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="30">
+<div class="cell-output cell-output-display" data-execution_count="28">
 <pre><code>gen_model_y_xz_cauchy (generic function with 2 methods)</code></pre>
 </div>
 </div>
@@ -481,7 +482,7 @@ Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_cauchy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="31">
+<div class="cell-output cell-output-display" data-execution_count="29">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -585,7 +586,7 @@ X-&gt;Y
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
 <span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="32">
+<div class="cell-output cell-output-display" data-execution_count="30">
 <div class="ansi-escaped-output">
 <pre>Summary Statistics
  <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
@@ -641,7 +642,7 @@ X-&gt;Y
 <span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>     p_bn_obs,</span>
 <span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>     p_dag_bn,</span>
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>     layout <span class="op">=</span> (<span class="fl">3</span>, <span class="fl">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="33">
+<div class="cell-output cell-output-display" data-execution_count="31">
 <p><img src="exploring-causality_files/figure-html/cell-12-output-1.svg" class="img-fluid"></p>
 </div>
 </div>
@@ -759,7 +760,7 @@ Z2-&gt;Y2
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="34">
+<div class="cell-output cell-output-display" data-execution_count="32">
 <pre><code>(16.00000000532549, 1.706489217754166e-7)</code></pre>
 </div>
 </div>
@@ -780,7 +781,7 @@ Z2-&gt;Y2
 <span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>Y_x_fixed <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_x)</span>
 <span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_x_fixed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="35">
+<div class="cell-output cell-output-display" data-execution_count="33">
 <pre><code>15.970828611632337</code></pre>
 </div>
 </div>
@@ -790,7 +791,7 @@ Z2-&gt;Y2
 <p>Now, what’s the deal with the two models — how do we obtain <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span>? Let’s first look at the model corresponding to the true data-generating process.</p>
 <p>Our first step is to get from the <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> expression to <span class="math inline">\(\text{E}(Y | X = 6)\)</span>. The <span class="math inline">\(do(\cdot)\)</span> operator has special meaning in Pearl’s framework — it represents conducting an intervention that sets the value of one (or more) variables to some specific value. In our case, <span class="math inline">\(do(X = 6)\)</span> means conducting an intervention that sets all values of <span class="math inline">\(X\)</span> to 6. Therefore, within Pearl’s framework there’s a difference between <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> — which represents the expected value of the <span class="math inline">\(Y\)</span> variable if we were to <em>intervene</em> on <span class="math inline">\(X\)</span> so that all values of <span class="math inline">\(X\)</span> are set to 6 — and <span class="math inline">\(\text{E}(Y | X = 6)\)</span> — which is simply the expected value of <span class="math inline">\(Y\)</span> we <em>observe</em> for cases where <span class="math inline">\(X = 6\)</span>.</p>
 <p><span class="citation" data-cites="pearlCausalCalculusStatistical1996">Pearl (<a href="#ref-pearlCausalCalculusStatistical1996" role="doc-biblioref">1996</a>)</span> introduces a set of three rules, called the do-calculus, which allows us to transition from <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> to <span class="math inline">\(\text{E}(Y | X = 6)\)</span> if it’s possible given the DAG we’re relying on.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> According to these rules, we start with <span class="math inline">\(\text{E}(Y | do(X = 6), Z = z)\)</span> — according to our DAG, <span class="math inline">\(Y\)</span> depends both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>; it’s conditional on both. Furthermore, since we’re doing an intervention on <span class="math inline">\(X\)</span> we have <span class="math inline">\(do(X = 6)\)</span>; since we’re only observing the value of <span class="math inline">\(Z\)</span>, there’s no <span class="math inline">\(do(Z = z)\)</span> term, but only <span class="math inline">\(Z = z\)</span>.</p>
-<p>Since our goal is <span class="math inline">\(\text{E}(Y | X = 6)\)</span>, the first thing we’ll try doing is converting the <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span> — this would allow us to think about the effect of the intervention <span class="math inline">\(do(X = 6)\)</span> based on data which are not interventional (i.e.&nbsp;we haven’t actually collected data after making an intervention), but observational (we have just observed the world in a certain state). We’re allowed to do this if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span>, conditional on <span class="math inline">\(Z\)</span>, in a modified DAG where all arrows exiting <span class="math inline">\(X\)</span> are removed. This may be written as <span class="math inline">\((Y \perp X | Z)_{G_{\underline{X}}}\)</span>, where <span class="math inline">\(G_{\underline{X}}\)</span> stands for “graph where all arrows going out of <span class="math inline">\(X\)</span> are removed”. This graph is shown in Figure <a href="#fig-three-var-confounding-x-out-mutil">Figure&nbsp;5</a>.</p>
+<p>Since our goal is <span class="math inline">\(\text{E}(Y | X = 6)\)</span>, the first thing we’ll try doing is converting the <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span> — this would allow us to think about the effect of the intervention <span class="math inline">\(do(X = 6)\)</span> based on data which are not interventional (i.e.&nbsp;we haven’t actually collected data after making an intervention), but observational (we have just observed the world in a certain state). We’re allowed to do this if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span>, conditional on <span class="math inline">\(Z\)</span>, in a modified DAG where all arrows exiting <span class="math inline">\(X\)</span> are removed. This may be written as <span class="math inline">\((Y \perp X | Z)_{G_{\underline{X}}}\)</span>, where <span class="math inline">\(G_{\underline{X}}\)</span> stands for “graph where all arrows going out of <span class="math inline">\(X\)</span> are removed”. This graph is shown in <a href="#fig-three-var-confounding-x-out-mutil">Figure&nbsp;5</a>.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-three-var-confounding-x-out-mutil" class="quarto-figure quarto-figure-center anchored">
@@ -859,14 +860,14 @@ Z-&gt;Y
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
 <span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="37">
+<div class="cell-output cell-output-display" data-execution_count="35">
 <pre><code>(16.141802104864944, 1.2496446976866825e-7)</code></pre>
 </div>
 </div>
 <p>Alternatively, we could do:</p>
 <div class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1</span> <span class="op">/</span> N <span class="op">*</span> <span class="fu">sum</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="38">
+<div class="cell-output cell-output-display" data-execution_count="36">
 <pre><code>16.13842621712317</code></pre>
 </div>
 </div>
@@ -970,44 +971,116 @@ X-&gt;Y
 \end{align}\]</span></p>
 <p>To obtain an estimate of <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> we can take our posterior estimates of <span class="math inline">\(\beta_{XY}\)</span> and <span class="math inline">\(\beta_{ZY}\)</span>, simulate a set of <span class="math inline">\(Z'\)</span> values, and calculate</p>
 <p><span class="math display">\[
-\frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6 + \hat{\beta}_{ZY} \times z'_i)
+    \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6 +
+        \hat{\beta}_{ZY} \times z'_i)
 \]</span></p>
 <div class="cell" data-execution_count="18">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>b_zx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">2</span>, <span class="op">:</span>mean]</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>b_yz <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>Z_prime_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_zx <span class="op">*</span> <span class="fl">6</span>, <span class="fl">1</span>)</span>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>s_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>b_xz <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">5</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">6</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>b_zy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">7</span>, <span class="op">:</span>mean]</span>
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>Z_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_prime_distr,</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>                      <span class="fl">10_000</span>)</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_yz <span class="op">*</span> Z_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="39">
-<pre><code>12.638661549040547</code></pre>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>Z_prime_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">6</span>, s_Z)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>Z_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_prime_distr,</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                      <span class="fl">10_000</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="37">
+<pre><code>19.476563750991136</code></pre>
 </div>
 </div>
 <p>Alternatively, if we rearrange the previous equation, we’ll notice that we’re really working with the expected value of the <span class="math inline">\(Z'\)</span> variable:</p>
 <p><span class="math display">\[\begin{align}
-    \text{E}(Y | X = 6, Z') &amp;= \frac{1}{N} \sum_{i}^N (\beta_{YX} \times 6 +
-        \beta_{YZ} \times z'_i) \\
-    &amp;= \beta_{YX} \times 6 + \beta_{YZ} \times
+    \text{E}(Y | X = 6, Z') &amp;= \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6
+        + \hat{\beta}_{ZY} \times z'_i) \\
+    &amp;= \hat{\beta}_{XY} \times 6 + \hat{\beta}_{ZY} \times
         \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z')}}.
 \end{align}\]</span></p>
 <p>According to our model, that is:</p>
 <p><span class="math display">\[
-    \text{E}(Z') = \mu_{z'_i} = \beta_ZX \times x_i,\; \text{where}\;
+    \text{E}(Z') = \mu_{z'_i} = \beta_{XZ} \times x_i,\; \text{where}\;
         x_i = 6\; \forall\, i
 \]</span></p>
 <p>meaning that we can also estimate the total causal effect of <span class="math inline">\(do(X = x)\)</span> on <span class="math inline">\(Y\)</span> like this:</p>
 <div class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#                   E(Z')</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>b_yx <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_yz <span class="op">*</span> (b_zx <span class="op">*</span> <span class="fl">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="40">
-<pre><code>12.641425542194078</code></pre>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> (b_xz <span class="op">*</span> <span class="fl">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="38">
+<pre><code>19.487497126823868</code></pre>
 </div>
 </div>
 <p>Here, we get an estimate of the total causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> that’s clearly biased upwards.</p>
+<section id="direct-and-indirect-effects" class="level4">
+<h4 class="anchored" data-anchor-id="direct-and-indirect-effects">Direct and indirect effects</h4>
+<p>Now, I’ve been trying to make it clear that, for the wrong DAG, we’re talking about the total causal effect of setting <span class="math inline">\(do(X = 6)\)</span> on the expected value of <span class="math inline">\(Y\)</span>. This was because, according to the models, <span class="math inline">\(X\)</span> affects <span class="math inline">\(Y\)</span> both directly and indirectly, by changing the value of <span class="math inline">\(Z\)</span>. Hence, the total effect of setting <span class="math inline">\(do(X = 6)\)</span> can be broken down into a (natural) direct effect, and a (natural) indirect effect<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. The natural direct effect refers to the expected value of the <span class="math inline">\(Y\)</span> variable when <span class="math inline">\(X\)</span> is set to some value, and the <span class="math inline">\(Z\)</span> variable is set to whatever value it would have had prior to setting <span class="math inline">\(X = x\)</span> <span class="citation" data-cites="pearlCausalInferenceStatistics2016">(<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">Pearl, Glymour, and Jewell 2016</a>)</span> <a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p>
+<p>We’ll use the value <span class="math inline">\(X = 0\)</span> as the reference point. In other words, when saying that the variable <span class="math inline">\(Z\)</span> holds values which <span class="math inline">\(Z\)</span> would have attained <em>prior to setting</em> <span class="math inline">\(X = 6\)</span>, we’re talking about the values <span class="math inline">\(Z\)</span> would have attained had <span class="math inline">\(X\)</span> been 0.</p>
+<p>How would we go about calculating the natural direct effect? The explanation is a bit long, and requires going into a lot of things not covered here (but see materials listed in the previous footnote). However, I’ll try giving a brief explanation. In our wrong DAG, the <span class="math inline">\(Z\)</span> variable serves as a link between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. Since the path <span class="math inline">\(X \textrightarrow Z \textrightarrow Y\)</span> is causal, these three variables form a chain, where <span class="math inline">\(Z\)</span> is a mediator of the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. In order to be able to identify the natural direct effect, there has to exist a set of measured variables, let’s call it <span class="math inline">\(W\)</span>, that satisfies two conditions. First, no variable in <span class="math inline">\(W\)</span> is allowed to be a descendant of <span class="math inline">\(X\)</span>; in other words, <span class="math inline">\(W\)</span> must not have an arrow going into it from <span class="math inline">\(X\)</span>, or from any variable that has an arrow out of <span class="math inline">\(X\)</span> going into it. Second, the variables in <span class="math inline">\(W\)</span> have to block all backdoor paths from the mediator <span class="math inline">\(Z\)</span> to <span class="math inline">\(Y\)</span>, once we’ve removed the arrows going from <span class="math inline">\(X\)</span> to <span class="math inline">\(Z\)</span> and from <span class="math inline">\(Z\)</span> to <span class="math inline">\(Y\)</span>. Since our DAG is really simple, the empty set (i.e.&nbsp;containing no variables), satisfies these two conditions; our set <span class="math inline">\(W\)</span> is empty. Therefore, we can get the natural direct effect as:</p>
+<p><span class="math display">\[
+    NDE = \int_z [\text{E}(Y | do(X = 6, Z = z)) -
+        \text{E}(Y | do(X = 0, Z = z))] \times p(Z = z | do(X = 0)).
+\]</span></p>
+<p>Let’s break this down by parts. First up is the expectation <span class="math inline">\(\text{E}(Y | do(X = 6, Z = z))\)</span>. Here, we apply the do-operator both to <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>. Can we get from the <span class="math inline">\(do(\cdot)\)</span> expression to a simple observation? First, let’s try turning <span class="math inline">\(do(Z = z)\)</span> into <span class="math inline">\(Z = z\)</span>. Given that we’re also intervening on <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> has to be independent from <span class="math inline">\(Y\)</span> in a DAG where all arrows entering <span class="math inline">\(X\)</span> and all arrows exiting <span class="math inline">\(Z\)</span> are removed (and possibly after conditioning on <span class="math inline">\(X\)</span>):</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-wrong-dag-interv-xz" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+Z-&gt;Y
+</title>
+</g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+<path fill="none" stroke="black" d="M40.34,-33.82C48.86,-43.29 60.06,-55.73 69.67,-66.41"></path> <polygon fill="black" stroke="black" points="67.35,-69.06 76.64,-74.15 72.55,-64.38 67.35,-69.06"></polygon> </g> <!-- X&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 8: Wrong DAG with arrows leaving <span class="math inline">\(Z\)</span> and entering <span class="math inline">\(X\)</span> removed.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This really is the case, conditional on <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span> are independent in such a graph: <span class="math inline">\((Z \perp Y | X)_{G_{\bar{X}\underline{Z}}}\)</span>. Therefore, we can write <span class="math inline">\(\text{E}(Y | do(X = 6), do(Z = z)) = \text{E}(Y | do(X = 6), Z = z)\)</span>. Next, we have to get rid of <span class="math inline">\(do(X = 6)\)</span>. We know we can do that from earlier, when we were calculating the total effect of intervening on <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. Therefore, we know that <span class="math inline">\(\text{E}(Y | do(X = 6, Z = z)) = \text{E}(Y | X = 6, Z = z)\)</span>, and also that <span class="math inline">\(\text{E}(Y | do(X = 0, Z = z)) = \text{E}(Y | X = 0, Z = z)\)</span>.</p>
+<p>Next, we have <span class="math inline">\(p(Z = z | do(X = 0))\)</span>. In order to replace the do-operator with a simple observation, <span class="math inline">\(Z\)</span> and <span class="math inline">\(X\)</span> have to be independent in a graph where all arrows exiting <span class="math inline">\(X\)</span> have been removed. We have this graph in <a href="#fig-simple-confounding-wrong-dag-interv-mutil">Figure&nbsp;7</a>. This is also the case. Therefore, we can replace the do-operator with an observation. This means that our natural direct effect can be calculated as:</p>
+<p><span class="math display">\[
+    NDE = \int_z [\text{E}(Y | X = 6, Z = z) -
+        \text{E}(Y | X = 0, Z = z)] \times p(Z = z | X = 0).
+\]</span></p>
+<p>According to our model specification:</p>
+<p><span class="math display">\[\begin{align}
+    \text{E}(Y | X = x, Z = z) &amp;= \mu_{y_i} \\
+        &amp;= \beta_{XY} x_i + \beta_{ZY} z_i \q
+    p(Z = z | X = 0) = normal(Z = z | \mu_{z_i}, \sigma_Z) \\
+        &amp;= normal(Z = z | b_{XZ} x_i, \sigma_Z)
+\end{align}\]</span></p>
+</section>
+</section>
+<section id="a-less-scary-way-to-compute" class="level3">
+<h3 class="anchored" data-anchor-id="a-less-scary-way-to-compute">A less scary way to compute</h3>
 <div class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(<span class="fu">fill</span>(<span class="fl">6</span>,</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
@@ -1051,12 +1124,12 @@ X-&gt;Y
 <div class="cell-output cell-output-display">
 <p><img src="exploring-causality_files/figure-html/cell-20-output-1.svg" class="img-fluid"></p>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="41">
+<div class="cell-output cell-output-display" data-execution_count="39">
 
 <div class="data-frame"><p>1 rows × 2 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y_dag_mean</th><th>Y_bn_mean</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>16.1387</td><td>19.4882</td></tr></tbody></table></div>
 </div>
 </div>
-<p>Here’s something interesting. While the model corresponding to the true DAG makes variable predictions (whose mean matches the expectation we’ve calculated earlier), the wrong model predicts values to be in a very narrow range (and which also have an overestimated expected value, also as calculated earlier). <a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p>
+<p>Here’s something interesting. While the model corresponding to the true DAG makes variable predictions (whose mean matches the expectation we’ve calculated earlier), the wrong model predicts values to be in a very narrow range (and which also have an overestimated expected value, also as calculated earlier). <a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
 
 </section>
 </section>
@@ -1067,6 +1140,15 @@ X-&gt;Y
 <div id="ref-pearlCausalCalculusStatistical1996" class="csl-entry" role="doc-biblioentry">
 Pearl, Judea. 1996. <span>“A <span>Causal Calculus</span> for <span>Statistical Research</span>.”</span> In <em>Learning from <span>Data</span></em>, edited by Doug Fisher and Hans-J. Lenz, 112:23–33. Lecture <span>Notes</span> in <span>Statistics</span>. <span>New York, NY</span>: <span>Springer New York</span>. <a href="https://doi.org/10.1007/978-1-4612-2404-4_3">https://doi.org/10.1007/978-1-4612-2404-4_3</a>.
 </div>
+<div id="ref-pearlIntroductionCausalInference2010" class="csl-entry" role="doc-biblioentry">
+———. 2010. <span>“An <span>Introduction</span> to <span>Causal Inference</span>.”</span> <em>The International Journal of Biostatistics</em> 6 (2). <a href="https://doi.org/10.2202/1557-4679.1203">https://doi.org/10.2202/1557-4679.1203</a>.
+</div>
+<div id="ref-pearlInterpretationIdentificationCausal2014" class="csl-entry" role="doc-biblioentry">
+———. 2014. <span>“Interpretation and <span>Identification</span> of <span>Causal Mediation</span>.”</span> <em>Psychological Methods</em> 19 (4): 459–81. <a href="https://doi.org/10.1037/a0036434">https://doi.org/10.1037/a0036434</a>.
+</div>
+<div id="ref-pearlMediationFormulaGuide" class="csl-entry" role="doc-biblioentry">
+———. n.d. <span>“The <span>Mediation Formula</span>: <span>A Guide</span> to the <span>Assessment</span> of <span>Causal Pathways</span> in <span>Nonlinear Models</span>,”</span> 39.
+</div>
 <div id="ref-pearlCausalInferenceStatistics2016" class="csl-entry" role="doc-biblioentry">
 Pearl, Judea, Madelyn Glymour, and Nicholas P. Jewell. 2016. <em>Causal <span>Inference</span> in <span>Statistics</span>: <span>A Primer</span></em>. <span>John Wiley &amp; Sons</span>.
 </div>
@@ -1076,7 +1158,9 @@ Pearl, Judea, Madelyn Glymour, and Nicholas P. Jewell. 2016. <em>Causal <span>In
 <li id="fn1" role="doc-endnote"><p>I’m putting unknown values (e.g.&nbsp;<span class="math inline">\(\mu_X\)</span>) instead of fixed values (e.g. 1) because the DAG, by itself, does not imply any specific form of the relationship between the variables. The variables don’t have to be normally distributed, either; I’m assuming a normal distribution for simplicity.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2" role="doc-endnote"><p>The notation in this text is a bit different than the <span class="math inline">\(do(\cdot)\)</span> notation I’m using here. From my reading, Pearl started to use the <span class="math inline">\(do(\cdot)\)</span> operator in his later work. In the text referenced here, <span class="math inline">\(p(Y | \hat{X})\)</span> is equal to <span class="math inline">\(p(Y | do(X = x))\)</span>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3" role="doc-endnote"><p>Hello, counterfactuals!<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4" role="doc-endnote"><p>I do have to put a disclaimer — since I’m really new to both Julia and <code>Turing.jl</code>, it could easily be the case that I’ve coded something model incorrectly.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>I won’t go into the nuances of why the word “natural” is doing a fair amount of work here. See <span class="citation" data-cites="pearlIntroductionCausalInference2010">Pearl (<a href="#ref-pearlIntroductionCausalInference2010" role="doc-biblioref">2010</a>)</span>, <span class="citation" data-cites="pearlInterpretationIdentificationCausal2014">Pearl (<a href="#ref-pearlInterpretationIdentificationCausal2014" role="doc-biblioref">2014</a>)</span> or <span class="citation" data-cites="pearlMediationFormulaGuide">Pearl (<a href="#ref-pearlMediationFormulaGuide" role="doc-biblioref">n.d.</a>)</span> for more information.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5" role="doc-endnote"><p><span class="citation" data-cites="pearlCausalInferenceStatistics2016">Pearl, Glymour, and Jewell (<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">2016</a>)</span> actually define the natural direct effect as the expected increase in <span class="math inline">\(Y\)</span> when <span class="math inline">\(X\)</span> changes from some starting value <span class="math inline">\(x_0\)</span> to some value <span class="math inline">\(x\)</span>. In our case, we can imagine that <span class="math inline">\(x = 0\)</span>, as we’re interested in the actual expected value of <span class="math inline">\(Y\)</span>, and not the change.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6" role="doc-endnote"><p>I do have to put a disclaimer — since I’m really new to both Julia and <code>Turing.jl</code>, it could easily be the case that I’ve coded something model incorrectly.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main>
 <!-- /main column -->

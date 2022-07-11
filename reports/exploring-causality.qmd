@@ -56,7 +56,7 @@ digraph G {
 }
 ```
 
-In the graph pictured in Figure @fig-three-var-confounding
+In the graph pictured in @fig-three-var-confounding
 there are two paths between $X$ and $Y.$ The first path is the direct one, going
 from $X$ to $Y$ ($X \textrightarrow Y$). The second path is an indirect one,
 and goes over the $Z$ variable: $X \textleftarrow Z \textrightarrow Y$.
@@ -71,7 +71,7 @@ makes it a *backdoor path* between $X$ and $Y$.
 
 The idea of backdoor paths is one of the central ideas in Pearl's framework.
 Backdoor paths are not causal, but create problems when trying to estimate
-causal effects. In the graph in Figure @fig-three-var-confounding, we'd have to
+causal effects. In the graph in @fig-three-var-confounding, we'd have to
 somehow close the backdoor path in order to obtain an unbiased estimate of the
 causal effect of $X$ on $Y$. In this case, the path can be close by adjusting
 for the $Z$ variable. We'll see how to do that in a bit.
@@ -237,7 +237,7 @@ other hand, should provide biased estimates of the causal effects, but should
 still be able to make accurate predictions. This may be a fine distinction, and
 is something I also aim to explore further down.
 
-I'll fit the model represented in Figure @fig-three-var-confounding-effs
+I'll fit the model represented in @fig-three-var-confounding-effs
 using the `Turing.jl` library. The model can be coded as follows:
 
 ```{julia model_three-var-simple-confound}
@@ -637,7 +637,7 @@ state). We're allowed to do this if $X$ is independent
 of $Y$, conditional on $Z$, in a modified DAG where all arrows exiting $X$ are
 removed. This may be written as $(Y \perp X | Z)_{G_{\underline{X}}}$, where
 $G_{\underline{X}}$ stands for "graph where all arrows going out of $X$ are
-removed". This graph is shown in Figure @fig-three-var-confounding-x-out-mutil.
+removed". This graph is shown in @fig-three-var-confounding-x-out-mutil.
 
 ```{dot fig_dag_effects}
 //| fig-cap: Graph with all arrows emanating from $X$ removed.
@@ -669,17 +669,17 @@ hard-coded, true coefficient values, with our estimates:
         &= \text{E}(\text{E}(Y | X = 6)) \\
         &= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
             \text{d}z \\
-        &= \int_{z \in Z}(\hat{\beta}_{YX} \times 6 +
-            \hat{\beta}_{YZ} \times z)f_Z(z)\, \text{d}z.
+        &= \int_{z \in Z}(\hat{b}_{YX} \times 6 +
+            \hat{b}_{YZ} \times z)f_Z(z)\, \text{d}z.
 \end{align}
 
 ```{julia}
 #| echo: false
 Markdown.parse("""Let's take the posterior means of the parameter estimates
-               for \$\\hat{\\beta}_{XY}\$ and \$\\hat{\\beta}_{ZY}\$, that is
-               \$\\beta_{XY} =
+               for \$\\hat{b}_{XY}\$ and \$\\hat{b}_{ZY}\$, that is
+               \$b{XY} =
                $(MCMCChains.summarystats(chains)[6, :mean] |> round_2)\$
-               and \$\\beta_{ZY} =
+               and \$b{ZY} =
                $(MCMCChains.summarystats(chains)[7, :mean] |> round_2)\$""")
 ```
 
@@ -707,8 +707,8 @@ Alternatively, we could do:
 ```
 
 The results align almost perfectly with the one obtained from the true model,
-which could have been expected, given that we've estimated both $\beta_{XY}$ and
-$\beta_{ZY}$ approximately correctly. So we basically just reran the previous
+which could have been expected, given that we've estimated both $b{XY}$ and
+$b{ZY}$ approximately correctly. So we basically just reran the previous
 calculation.
 
 ### Interventions according to the wrong DAG
@@ -787,16 +787,16 @@ $\text{E}(Y | do(X = 6), Z')$. According to our model,
 
 \begin{align}
     \text{E}(Y | do(X = 6), Z') &= \text{E}(Y | X = 6, Z') \\
-        &= \beta_{XY} \times 6 + \beta_{ZY} \times Z'.
+        &= b{XY} \times 6 + b{ZY} \times Z'.
 \end{align}
 
 To obtain an estimate of $\text{E}(Y | do(X = 6), Z)$ we can take our posterior
-estimates of $\beta_{XY}$ and $\beta_{ZY}$, simulate a
+estimates of $b{XY}$ and $b{ZY}$, simulate a
 set of $Z'$ values, and calculate
 
 $$
-    \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6 +
-        \hat{\beta}_{ZY} \times z'_i)
+    \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6 +
+        \hat{b}_{ZY} \times z'_i)
 $$
 
 ```{julia}
@@ -818,16 +818,16 @@ Alternatively, if we rearrange the previous equation, we'll notice that we're
 really working with the expected value of the $Z'$ variable:
 
 \begin{align}
-    \text{E}(Y | X = 6, Z') &= \frac{1}{N} \sum_{i}^N (\hat{\beta}_{XY} \times 6
-        + \hat{\beta}_{ZY} \times z'_i) \\
-    &= \hat{\beta}_{XY} \times 6 + \hat{\beta}_{ZY} \times
+    \text{E}(Y | X = 6, Z') &= \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6
+        + \hat{b}_{ZY} \times z'_i) \\
+    &= \hat{b}_{XY} \times 6 + \hat{b}_{ZY} \times
         \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z')}}.
 \end{align}
 
 According to our model, that is:
 
 $$
-    \text{E}(Z') = \mu_{z'_i} = \beta_{XZ} \times x_i,\; \text{where}\;
+    \text{E}(Z') = \mu_{z'_i} = b{XZ} \times x_i,\; \text{where}\;
         x_i = 6\; \forall\, i
 $$
 
@@ -841,6 +841,103 @@ b_xy * 6 + b_zy * (b_xz * 6)
 
 Here, we get an estimate of the total causal effect of $X$ on $Y$ that's clearly
 biased upwards.
+
+#### Direct and indirect effects
+
+Now, I've been trying to make it clear that, for the wrong DAG, we're talking
+about the total causal effect of setting $do(X = 6)$ on the expected value of
+$Y$. This was because, according to the models, $X$ affects $Y$ both directly
+and indirectly, by changing the value of $Z$. Hence, the total effect of setting
+$do(X = 6)$ can be broken down into a (natural) direct effect, and a (natural)
+indirect effect[^natural_effect]. The natural direct effect refers to the
+expected value of the $Y$ variable when $X$ is set to some value, and the $Z$
+variable is set to whatever value it would have had prior to setting $X =
+x$ [@pearlCausalInferenceStatistics2016]
+[^natural_direct_eff].
+
+We'll use the value $X = 0$ as the reference point. In other words, when saying
+that the variable $Z$ holds values which $Z$ would have attained *prior to
+setting* $X = 6$, we're talking about the values $Z$ would have attained had
+$X$ been 0.
+
+How would we go about calculating the natural direct effect? The explanation is
+a bit long, and requires going into a lot of things not covered here (but see
+materials listed in the previous footnote). However, I'll try giving a brief
+explanation. In our wrong DAG, the $Z$ variable serves as a link between $X$ and
+$Y$. Since the path $X \textrightarrow Z \textrightarrow Y$ is causal, these
+three variables form a chain, where $Z$ is a mediator of the effect of $X$ on
+$Y$. In order to be able to identify the natural direct effect, there has to
+exist a set of measured variables, let's call it $W$, that satisfies two
+conditions. First, no variable in $W$ is allowed to be a descendant of $X$; in
+other words, $W$ must not have an arrow going into it from $X$, or from any
+variable that has an arrow out of $X$ going into it. Second, the variables in
+$W$ have to block all backdoor paths from the mediator $Z$ to $Y$, once we've
+removed the arrows going from $X$ to $Z$ and from $Z$ to $Y$. Since our DAG is
+really simple, the empty set (i.e. containing no variables), satisfies these two
+conditions; our set $W$ is empty. Therefore, we can get the natural direct
+effect as:
+
+$$
+    NDE = \int_z [\text{E}(Y | do(X = 6, Z = z)) -
+        \text{E}(Y | do(X = 0, Z = z))] \times p(Z = z | do(X = 0)).
+$$
+
+Let's break this down by parts. First up is the expectation
+$\text{E}(Y | do(X = 6, Z = z))$. Here, we apply the do-operator both to $X$ and
+$Z$. Can we get from the $do(\cdot)$ expression to a simple observation?
+First, let's try turning $do(Z = z)$ into $Z = z$. Given that we're also
+intervening on $X$, $Z$ has to be independent from $Y$ in a DAG where all arrows
+entering $X$ and all arrows exiting $Z$ are removed (and possibly after
+conditioning on $X$):
+
+```{dot fig_bn_x-confound}
+//| fig-align: center
+//| fig-cap: Wrong DAG with arrows leaving $Z$ and entering $X$ removed.
+//| label: fig-simple-confounding-wrong-dag-interv-xz
+
+digraph G {
+    layout=dot;
+    rankdir=TB;
+    Z[label="Z"];
+    X[label="X"];
+    Y[label="Y"];
+    Z -> Y[style="invisible"; arrowhead="none"];
+    X -> Z;
+    X -> Y[minlen=4];
+    {rank="same"; X; Y;}
+}
+```
+
+This really is the case, conditional on $X$, $Z$ and $Y$ are independent in such
+a graph: $(Z \perp Y | X)_{G_{\bar{X}\underline{Z}}}$. Therefore, we can write
+$\text{E}(Y | do(X = 6), do(Z = z)) = \text{E}(Y | do(X = 6), Z = z)$. Next, we
+have to get rid of $do(X = 6)$. We know we can do that from earlier, when we
+were calculating the total effect of intervening on $X$ on $Y$. Therefore,
+we know that $\text{E}(Y | do(X = 6, Z = z)) = \text{E}(Y | X = 6, Z = z)$, and
+also that $\text{E}(Y | do(X = 0, Z = z)) = \text{E}(Y | X = 0, Z = z)$.
+
+Next, we have $p(Z = z | do(X = 0))$. In order to replace the do-operator with a
+simple observation, $Z$ and $X$ have to be independent in a graph where all
+arrows exiting $X$ have been removed. We have this graph in
+@fig-simple-confounding-wrong-dag-interv-mutil. This is also the case.
+Therefore, we can replace the do-operator with an observation. This means that
+our natural direct effect can be calculated as:
+
+$$
+    NDE = \int_z [\text{E}(Y | X = 6, Z = z) -
+        \text{E}(Y | X = 0, Z = z)] \times p(Z = z | X = 0).
+$$
+
+According to our model specification:
+
+\begin{align}
+    \text{E}(Y | X = x, Z = z) &= \mu_{y_i} \\
+        &= b{XY} x_i + b{ZY} z_i \\
+    p(Z = z | X = 0) = normal(Z = z | \mu_{z_i}, \sigma_Z) \\
+        &= normal(Z = z | b_{XZ} x_i, \sigma_Z)
+\end{align}
+
+### A less scary way to compute
 
 ```{julia fig_compare_dag-bn-x-confound_intervention}
 pred_gen_model_y_xz = gen_model_y_xz(fill(6,
@@ -902,3 +999,12 @@ distributed, either; I'm assuming a normal distribution for simplicity.
 $do(\cdot)$ notation I'm using here. From my reading, Pearl started to use the
 $do(\cdot)$ operator in his later work. In the text referenced here,
 $p(Y | \hat{X})$ is equal to $p(Y | do(X = x))$.
+[^natural_effect]: I won't go into the nuances of why the word "natural" is
+doing a fair amount of work here. See 
+@pearlIntroductionCausalInference2010,
+@pearlInterpretationIdentificationCausal2014 or
+@pearlMediationFormulaGuide for more information.
+[^natural_direct_eff]: @pearlCausalInferenceStatistics2016 actually define the
+natural direct effect as the expected increase in $Y$ when $X$ changes from some
+starting value $x_0$ to some value $x$. In our case, we can imagine that $x =
+0$, as we're interested in the actual expected value of $Y$, and not the change.
