@@ -475,7 +475,7 @@ For example, here, we'll try predicting the effect of an intervention
 that would set the value of $X$ to some $x$, denoted $do(X = x)$.
 Under such an intervention, our two competing DAGs would look like this:
 
-```{dot fig_bn_x-confound}
+```{dot fig_compare-dags}
 //| fig-align: center
 //| fig-cap: Causal DAGs when we simulate a $do(X = x)$ intervention. True DAG left, wrong DAG right.
 //| label: fig-simple-confounding-do-compare
@@ -567,7 +567,7 @@ We can use the `QuadGK.jl` package to calculate this expectation. Here, we'll
 rely on the fact that we know the distribution of $Z$, as we're looking for
 the effect of the intervention according to the true data-generating model.
 
-```{julia}
+```{julia calculate-true-effect-integral}
 function integral(z)
     f_Z = Distributions.Normal(1, 1)
     return (2 * 6 + 4 * z) * Distributions.pdf(f_Z, z)
@@ -581,7 +581,7 @@ QuadGK.quadgk(integral,
 To confirm that our calculation is correct, we'll also simulate a new set of $Y$
 values, with $X = 6$:
 
-```{julia}
+```{julia true-effect-simulate}
 N_sim = 100_000
 
 x_i = 6
@@ -639,7 +639,7 @@ removed. This may be written as $(Y \perp X | Z)_{G_{\underline{X}}}$, where
 $G_{\underline{X}}$ stands for "graph where all arrows going out of $X$ are
 removed". This graph is shown in @fig-three-var-confounding-x-out-mutil.
 
-```{dot fig_dag_effects}
+```{dot fig_dag-true_from-x-removed}
 //| fig-cap: Graph with all arrows emanating from $X$ removed.
 //| label: fig-three-var-confounding-x-out-mutil
 
@@ -683,7 +683,7 @@ Markdown.parse("""Let's take the posterior means of the parameter estimates
                $(MCMCChains.summarystats(chains)[7, :mean] |> round_2)\$""")
 ```
 
-```{julia}
+```{julia true-dag-simulate-intervention}
 mu_Z = MCMCChains.summarystats(chains)[3, :mean]
 s_Z = MCMCChains.summarystats(chains)[4, :mean]
 
@@ -702,7 +702,7 @@ QuadGK.quadgk(integral,
 
 Alternatively, we could do:
 
-```{julia}
+```{julia true-dag-calculate-simulated}
 1 / N * sum(b_xy * 6 .+ b_zy * Z)
 ```
 
@@ -716,7 +716,7 @@ calculation.
 Now for the second model. As we've mentioned earlier, no arrows get deleted
 in this model, as there are no arrows entering $X$.
 
-```{dot fig_bn_x-confound}
+```{dot fig_wrong-dag_intervention}
 //| fig-align: center
 //| fig-cap: DAG of the intervention $do(X = 6)$ in the wrong DAG.
 //| label: fig-simple-confounding-wrong-dag-interv
@@ -747,7 +747,7 @@ to the rules, we can do that if $X$ is independent of $Y$ when all of the arrows
 emanating from $X$ are removed from the graph (and, possibly, while adjusting
 for $Z$). The mutilated graph looks like this:
 
-```{dot fig_bn_x-confound}
+```{dot fig_wrong-dag_from-x-removed}
 //| fig-align: center
 //| fig-cap: Wrong DAG with arrows leaving $X$ removed.
 //| label: fig-simple-confounding-wrong-dag-interv-mutil
@@ -799,7 +799,7 @@ $$
         \hat{b}_{ZY} \times z'_i)
 $$
 
-```{julia}
+```{julia calculate-te-simulation}
 s_Z = MCMCChains.summarystats(chains_x_conf)[4, :mean]
 
 b_xz = MCMCChains.summarystats(chains_x_conf)[5, :mean]
@@ -834,7 +834,7 @@ $$
 meaning that we can also estimate the total causal effect of $do(X = x)$ on
 $Y$ like this:
 
-```{julia}
+```{julia calculate-te-short}
 #                   E(Z')
 b_xy * 6 + b_zy * (b_xz * 6)
 ```
@@ -890,7 +890,7 @@ intervening on $X$, $Z$ has to be independent from $Y$ in a DAG where all arrows
 entering $X$ and all arrows exiting $Z$ are removed (and possibly after
 conditioning on $X$):
 
-```{dot fig_bn_x-confound}
+```{dot fig_wrong-dat_from-z-into-x-removed}
 //| fig-align: center
 //| fig-cap: Wrong DAG with arrows leaving $Z$ and entering $X$ removed.
 //| label: fig-simple-confounding-wrong-dag-interv-xz
@@ -940,7 +940,7 @@ According to our model specification:
 We can, again, code this using `QuadGK`, plugging in our posterior estimates of
 the parameter values:
 
-```{julia}
+```{julia calculate-nde-integral}
 function integral(z)
     f_Z = Distributions.Normal(b_xz * 0, s_Z)
     out = ((b_xy * 6 + b_zy * z) - (b_xy * 0 + b_zy * z)) *
@@ -955,7 +955,7 @@ QuadGK.quadgk(integral,
 Alternatively, for example, we could simulate data corresponding to the
 given definition of the natural direct effect:
 
-```{julia}
+```{julia calculate-nde-simulation}
 # distribution of Z when X is set to 0
 Z_0_distr = Distributions.Normal(b_xz * 0, s_Z)
 
@@ -981,63 +981,58 @@ Y_6 = map(mean,
           Y_6)
 
 # mean of the difference
-mean(Y_6 .- Y_0)
+nde = mean(Y_6 .- Y_0)
 ```
 
-### A less scary way to compute
+#### Natural indirect effect
 
-```{julia fig_compare_dag-bn-x-confound_intervention}
-pred_gen_model_y_xz = gen_model_y_xz(fill(6,
-                                          N),
-                                     fill(missing,
-                                          N),
-                                     d.Z)
+The natural indirect effect refers to the expected value of $Y$ while $X$ is set
+to some value $x$, and $Z$ takes the value it would have had if $X$ were set to
+some $x'$. We'll again use $X = 0$ as a reference point.
 
-y_hat_dag = Turing.predict(pred_gen_model_y_xz,
-                           chains)
+In the case of our DAG, the natural indirect effect may be calculated as
 
-pred_bn_model_y_xz = bn_model_y_xz(fill(6,
-                                        N),
-                                   fill(missing,
-                                        N),
-                                   fill(missing,
-                                        N))
+$$
+    NIE = \int_z \text{E}(Y | X = 0, Z = z)[p(Z = z | X = 6) -
+        p(Z = z | X = 0)]
+$$
 
-y_hat_bn = Turing.predict(pred_bn_model_y_xz,
-                          chains_x_conf)
+Let's try computing this.
 
+```{julia calculate-nie}
+function integral(z)
+    f_Z_0 = Distributions.Normal(b_xz * 0, s_Z)
+    f_Z_6 = Distributions.Normal(b_xz * 6, s_Z)
 
-y_hat_bn_summary = MCMCChains.summarystats(y_hat_bn) |>
-    DataFrames.DataFrame
+    return (b_xy * 0 + b_zy * z) *
+        (Distributions.pdf(f_Z_6, z) - Distributions.pdf(f_Z_0, z))
+end
 
-y_hat_bn_summary = transform(y_hat_bn_summary,
-                             :parameters => x -> String.(x);
-                             copycols=false,
-                             renamecols=false)
-
-y_hat_bn_summary = subset(y_hat_bn_summary,
-                          :parameters => x -> contains.(x, r"^Y"))
-
-d_dag_bn = DataFrames.DataFrame("Y_dag" =>
-                                    MCMCChains.summarystats(y_hat_dag)[:, :mean],
-                                "Y_bn" => y_hat_bn_summary[:, :mean])
-
-compare_yhat(d_dag_bn) |> display
-
-DataFrames.combine(d_dag_bn,
-                   DataFrames.All() .=> mean)
+nie = QuadGK.quadgk(integral,
+                    -Inf,
+                    Inf)
 ```
 
-Here's something interesting. While the model corresponding to the true DAG
-makes variable predictions (whose mean matches the expectation we've calculated
-earlier), the wrong model predicts values to be in a very narrow range (and
-which also have an overestimated expected value, also as calculated earlier).
-[^disclaimer_compare]
+As I've mentioned earlier, the total causal effect can be *decomposed* into the
+natural direct effect and the natural indirect effect. Therefore, if our
+calculations are correct, we'd expect that the sum of our natural indirect and
+direct effects (approximately) corresponds to the total effect we've obtained
+earlier. This really is the case with our calculations:
+
+```{julia sum-nde-nie}
+nde + nie[1]
+```
+
+### A less scary way to compute?
+
+Now, we've seemingly managed to identify and calculate the effect an
+intervention on $X$ would have on $Y$ when assuming different causal
+relationships between variables. Until now, we've relied on integrals and
+simulations to calculate the effects (and have only dealt with point estimates).
+This wasn't necessarily very complicated, but also wasn't simple and
+straightforward.
 
 [^counterfactuals]: Hello, counterfactuals!
-[^disclaimer_compare]: I do have to put a disclaimer --- since I'm really new
-to both Julia and `Turing.jl`, it could easily be the case that I've coded
-something model incorrectly.
 [^mu_x]: I'm putting unknown values (e.g. $\mu_X$) instead of fixed values (e.g.
 1) because the DAG, by itself, does not imply any specific form of the
 relationship between the variables. The variables don't have to be normally
