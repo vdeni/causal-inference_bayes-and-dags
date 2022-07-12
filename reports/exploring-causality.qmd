@@ -602,7 +602,7 @@ mean(Y_x_fixed)
 As we can see, we're getting a very similar result. This gives us additional
 confidence that our calculation was correct.
 
-### Interventions according to the true DAG
+### Interventions according to the true DAG {#sec-interventions-acccording-to-the-true-dag}
 
 Now, what's the deal with the two models --- how do we obtain $\text{E}(Y | do(X
 = 6))$? Let's first look at the model corresponding to the true
@@ -1038,7 +1038,7 @@ without having to use do-calculus at all. The idea is that we simultaneously fit
 a pre-intervention and post-intervention model. Sounds esoteric, but is
 relatively simple in practice.
 
-### Interventions according to the true DAG. 
+### Interventions according to the true DAG
 
 Let's return to the model which is in line with the true directed acyclic graph
 (DAG). We've already mentioned that interventions can be represented by removing
@@ -1092,7 +1092,9 @@ digraph G {
 
 Let's fit this model in `Turing.jl`:
 
-```{julia}
+```{julia fit-simultaneous-true-dag}
+#| warning: false
+#| message: false
 Turing.@model function simul_model(X,
                                    Y,
                                    Z)
@@ -1101,7 +1103,6 @@ Turing.@model function simul_model(X,
 
     Z ~ Turing.Normal(mu_Z, s_Z)
 
-    mu_Y ~ Turing.Normal(2, 1)
     s_Y ~ Turing.Exponential(1)
 
     s_X ~ Turing.Exponential(1)
@@ -1162,8 +1163,118 @@ the model. For each iteration of the MCMC, `Y_prime` holds 50 samples from the
 distribution of $Y'$. After extracting the `Y_prime` values, I've calculated the
 mean of each sample of size 50, and then the mean of those means. What we get is
 suspiciously similar to the expected value we've calculated in 
-@interventions-acccording-to-the-true-dag. This seems nice. However, as a sanity
+@sec-interventions-acccording-to-the-true-dag. This seems nice. However, as a sanity
 check, let's also try calculating the values implied by the wrong DAG.
+
+### Interventions according to the wrong DAG
+
+Let's repeat the process from the previous section, but this time relying on the
+DAG we know to be wrong. We'll try getting both an estimate of the total effect
+and the natural direct and indirect effects. For the total effect, the model
+we're working with is:
+
+```{dot fig_wrong-dag_bayes-model_total}
+//| fig-align: center
+//| fig-cap: Graph with pre-intervention model on the left and post-intervention model on the right.
+//| label: fig-simple-confounding-bayes-intervention-true
+
+digraph G {
+    layout=dot;
+    rankdir=TB;
+    theta_Z[label=<&theta;<SUB>Z</SUB>>];
+    theta_Z -> {Z1; Z2}[style="dashed"];
+    theta_Y[label=<&theta;<SUB>Y</SUB>>];
+    theta_Y -> {Y1; Y2}[style="dashed"];
+    {rank="min"; theta_Z; theta_Y}
+    subgraph cluster_pre {
+        pencolor="none";
+        X1[label=<X<SUB>n</SUB>>];
+        Y1[label=<Y<SUB>n</SUB>>];
+        Z1[label=<Z<SUB>n</SUB>>];
+        X1 -> Y1[minlen=4];
+        X1 -> Z1
+        Z1 -> Y1;
+        {rank="same"; X1; Y1}
+    }
+    subgraph cluster_post {
+        pencolor="none";
+        X2[label="X'"];
+        Y2[label="Y'"];
+        Z2[label="Z'"];
+        Z2 -> Y2;
+        X2 -> Y2[minlen=4];
+        X2 -> Z2;
+        {rank="same"; X2; Y2}
+    }
+}
+```
+
+```{julia fit-simultaneous-wrong-dag-total}
+#| warning: false
+#| message: false
+Turing.@model function simul_model_total(X,
+                                         Y,
+                                         Z)
+    mu_X ~ Turing.Normal(2, 1)
+    s_X ~ Turing.Exponential(1)
+
+    X ~ Turing.Normal(mu_X, s_X)
+
+    s_Y ~ Turing.Exponential(1)
+
+    s_X ~ Turing.Exponential(1)
+
+    b_XZ ~ Turing.Normal(2, 1)
+    b_XY ~ Turing.Normal(2, 1)
+    b_ZY ~ Turing.Normal(2, 1)
+
+    for i in eachindex(X)
+        Z[i] ~ Turing.Normal(X[i] * b_XZ,
+                             s_Z)
+
+        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY,
+                             s_Y)
+    end
+
+    X_prime = 6
+
+    Z_prime ~ Turing.Normal(X_prime * b_XZ, s_Z)
+
+    Y_prime_distr = Turing.Normal(X_prime * b_XY + Z_prime * b_ZY,
+                                  s_Y)
+
+    Y_prime = Random.rand(Y_prime_distr, 50)
+
+    return Y_prime
+end
+
+chains_simul_total = Turing.sample(simul_model_total(X,
+                                                     Y,
+                                                     Z),
+                                   Turing.NUTS(1000,
+                                               0.80),
+                                   Turing.MCMCThreads(),
+                                   1000,
+                                   4)
+
+Y_prime = Turing.generated_quantities(simul_model_total(X,
+                                                        Y,
+                                                        Z),
+                                      chains_simul_total)
+
+Y_prime_exp = map(mean,
+                  Y_prime) |>
+    vec
+
+mean(Y_prime_exp) |>
+    display
+
+quantile(Y_prime_exp,
+         [0.1, 0.9]) |>
+    display
+```
+
+Again, this aligns well with our earlier estimates of the total causal effect.
 
 [^counterfactuals]: Hello, counterfactuals!
 [^mu_x]: I'm putting unknown values (e.g. $\mu_X$) instead of fixed values (e.g.
@@ -1173,7 +1284,7 @@ distributed, either; I'm assuming a normal distribution for simplicity.
 [^intervention_notation]: The notation in this text is a bit different than the
 $do(\cdot)$ notation I'm using here. From my reading, Pearl started to use the
 $do(\cdot)$ operator in his later work. In the text referenced here,
-$p(Y | \hat{X})$ is equal to $p(Y | do(X = x))$.
+$p(Y | \check{X})$ is equal to $p(Y | do(X = x))$.
 [^natural_effect]: I won't go into the nuances of why the word "natural" is
 doing a fair amount of work here. See 
 @pearlIntroductionCausalInference2010,
