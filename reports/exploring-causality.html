@@ -136,7 +136,10 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#interventions-according-to-the-true-dag" id="toc-interventions-according-to-the-true-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-true-dag">Interventions according to the true DAG</a></li>
   <li><a href="#interventions-according-to-the-wrong-dag" id="toc-interventions-according-to-the-wrong-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</a></li>
-  <li><a href="#a-less-scary-way-to-compute" id="toc-a-less-scary-way-to-compute" class="nav-link" data-scroll-target="#a-less-scary-way-to-compute">A less scary way to compute?</a></li>
+  </ul></li>
+  <li><a href="#a-less-scary-way-to-compute" id="toc-a-less-scary-way-to-compute" class="nav-link" data-scroll-target="#a-less-scary-way-to-compute">A less scary way to compute?</a>
+  <ul class="collapse">
+  <li><a href="#interventions-according-to-the-true-dag." id="toc-interventions-according-to-the-true-dag." class="nav-link" data-scroll-target="#interventions-according-to-the-true-dag.">Interventions according to the true DAG.</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -1159,9 +1162,105 @@ X-&gt;Y
 </div>
 </section>
 </section>
-<section id="a-less-scary-way-to-compute" class="level3">
-<h3 class="anchored" data-anchor-id="a-less-scary-way-to-compute">A less scary way to compute?</h3>
+</section>
+<section id="a-less-scary-way-to-compute" class="level2">
+<h2 class="anchored" data-anchor-id="a-less-scary-way-to-compute">A less scary way to compute?</h2>
 <p>Now, we’ve seemingly managed to identify and calculate the effect an intervention on <span class="math inline">\(X\)</span> would have on <span class="math inline">\(Y\)</span> when assuming different causal relationships between variables. Until now, we’ve relied on integrals and simulations to calculate the effects (and have only dealt with point estimates). This wasn’t necessarily very complicated, but also wasn’t simple and straightforward.</p>
+<p>There’s an interesting text by <span class="citation" data-cites="lattimoreCausalInferenceBayes2019">Lattimore and Rohde (<a href="#ref-lattimoreCausalInferenceBayes2019" role="doc-biblioref">2019</a>)</span>, where they claim that we can get estimates of causal effects using the Bayesian machinery, without having to use do-calculus at all. The idea is that we simultaneously fit a pre-intervention and post-intervention model. Sounds esoteric, but is relatively simple in practice.</p>
+<section id="interventions-according-to-the-true-dag." class="level3">
+<h3 class="anchored" data-anchor-id="interventions-according-to-the-true-dag.">Interventions according to the true DAG.</h3>
+<p>Let’s return to the model which is in line with the true directed acyclic graph (DAG). We’ve already mentioned that interventions can be represented by removing all arrows going into the variable that’s being intervened upon. <span class="citation" data-cites="lattimoreCausalInferenceBayes2019">Lattimore and Rohde (<a href="#ref-lattimoreCausalInferenceBayes2019" role="doc-biblioref">2019</a>)</span> take this idea an model the pre-intervention and post-intervention states simultaneously. A key step is to connect all variables which are not being intervened upon with a common, latent parameter. I’ll label those parameters <span class="math inline">\(\theta\)</span>, and subscript them with the variable they’re referring to. For example, <span class="math inline">\(\theta_X\)</span> would be the parameter connecting the pre-intervention variable <span class="math inline">\(X\)</span> with the post-intervention variable, which I’ll label <span class="math inline">\(X'\)</span>.</p>
+<p>So, keeping all that in mind, what we’re trying to model is shown in <a href="#fig-simple-confounding-bayes-intervention-true">Figure&nbsp;9</a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-bayes-intervention-true" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="386pt" height="188pt" viewbox="0.00 0.00 386.00 188.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 184)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-184 382,-184 382,4 -4,4"></polygon> <!-- theta_Z --> <g id="node1" class="node">
+<title>
+theta_Z
+</title>
+<ellipse fill="none" stroke="black" cx="179" cy="-162" rx="27" ry="18"></ellipse> <text text-anchor="start" x="171.22" y="-158.8" font-family="Times,serif" font-size="14.00">θ</text> <text text-anchor="start" x="178.22" y="-158.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">Z</text> </g> <!-- Z1 --> <g id="node2" class="node">
+<title>
+Z1
+</title>
+<ellipse fill="none" stroke="black" cx="133" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="start" x="125.22" y="-86.8" font-family="Times,serif" font-size="14.00">Z</text> <text text-anchor="start" x="133.78" y="-86.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- theta_Z&#45;&gt;Z1 --> <g id="edge1" class="edge">
+<title>
+theta_Z-&gt;Z1
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M168.56,-145.12C162.8,-136.34 155.52,-125.26 149.04,-115.42"></path> <polygon fill="black" stroke="black" points="151.81,-113.26 143.4,-106.82 145.96,-117.1 151.81,-113.26"></polygon> </g> <!-- Z2 --> <g id="node3" class="node">
+<title>
+Z2
+</title>
+<ellipse fill="none" stroke="black" cx="243" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="243" y="-85.8" font-family="Times,serif" font-size="14.00">Z’</text> </g> <!-- theta_Z&#45;&gt;Z2 --> <g id="edge2" class="edge">
+<title>
+theta_Z-&gt;Z2
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M192.57,-146.15C201.31,-136.6 212.83,-123.99 222.66,-113.25"></path> <polygon fill="black" stroke="black" points="225.28,-115.57 229.45,-105.82 220.12,-110.84 225.28,-115.57"></polygon> </g> <!-- Y1 --> <g id="node5" class="node">
+<title>
+Y1
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="start" x="144.44" y="-14.8" font-family="Times,serif" font-size="14.00">Y</text> <text text-anchor="start" x="154.56" y="-14.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- Z1&#45;&gt;Y1 --> <g id="edge7" class="edge">
+<title>
+Z1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M137.84,-72.05C140.1,-64.14 142.85,-54.54 145.37,-45.69"></path> <polygon fill="black" stroke="black" points="148.82,-46.37 148.2,-35.79 142.09,-44.44 148.82,-46.37"></polygon> </g> <!-- X1 --> <g id="node7" class="node">
+<title>
+X1
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="start" x="18.44" y="-14.8" font-family="Times,serif" font-size="14.00">X</text> <text text-anchor="start" x="28.56" y="-14.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- Z1&#45;&gt;X1 --> <g id="edge6" class="edge">
+<title>
+Z1-&gt;X1
+</title>
+<path fill="none" stroke="black" d="M114.54,-76.81C97.84,-65.78 73.05,-49.41 54.11,-36.9"></path> <polygon fill="black" stroke="black" points="55.88,-33.88 45.61,-31.29 52.02,-39.72 55.88,-33.88"></polygon> </g> <!-- Y2 --> <g id="node6" class="node">
+<title>
+Y2
+</title>
+<ellipse fill="none" stroke="black" cx="351" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="351" y="-13.8" font-family="Times,serif" font-size="14.00">Y’</text> </g> <!-- Z2&#45;&gt;Y2 --> <g id="edge9" class="edge">
+<title>
+Z2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M261.81,-76.81C279,-65.67 304.62,-49.06 323.99,-36.5"></path> <polygon fill="black" stroke="black" points="325.92,-39.43 332.4,-31.05 322.11,-33.56 325.92,-39.43"></polygon> </g> <!-- X2 --> <g id="node8" class="node">
+<title>
+X2
+</title>
+<ellipse fill="none" stroke="black" cx="225" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="225" y="-13.8" font-family="Times,serif" font-size="14.00">X’</text> </g> <!-- Z2&#45;&gt;X2 --> <g id="edge10" class="edge">
+<title>
+Z2-&gt;X2
+</title>
+</g> <!-- theta_Y --> <g id="node4" class="node">
+<title>
+theta_Y
+</title>
+<ellipse fill="none" stroke="black" cx="274" cy="-162" rx="27" ry="18"></ellipse> <text text-anchor="start" x="265.44" y="-158.8" font-family="Times,serif" font-size="14.00">θ</text> <text text-anchor="start" x="272.44" y="-158.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">Y</text> </g> <!-- theta_Y&#45;&gt;Y1 --> <g id="edge3" class="edge">
+<title>
+theta_Y-&gt;Y1
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M255.16,-148.84C240.84,-138.98 221.24,-124.12 207,-108 189.99,-88.74 175.21,-63.41 165.44,-44.7"></path> <polygon fill="black" stroke="black" points="168.45,-42.91 160.8,-35.59 162.22,-46.09 168.45,-42.91"></polygon> </g> <!-- theta_Y&#45;&gt;Y2 --> <g id="edge4" class="edge">
+<title>
+theta_Y-&gt;Y2
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M282.83,-144.71C296.18,-120.1 321.59,-73.24 337.33,-44.21"></path> <polygon fill="black" stroke="black" points="340.58,-45.56 342.27,-35.1 334.43,-42.22 340.58,-45.56"></polygon> </g> <!-- X1&#45;&gt;Y1 --> <g id="edge5" class="edge">
+<title>
+X1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> <!-- X2&#45;&gt;Y2 --> <g id="edge8" class="edge">
+<title>
+X2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M252.07,-18C272.66,-18 293.25,-18 313.84,-18"></path> <polygon fill="black" stroke="black" points="313.95,-21.5 323.95,-18 313.95,-14.5 313.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 9: Graph with pre-intervention model on the left and post-intervention model on the right.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
 
 </section>
 </section>
@@ -1169,6 +1268,9 @@ X-&gt;Y
 
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-lattimoreCausalInferenceBayes2019" class="csl-entry" role="doc-biblioentry">
+Lattimore, Finnian, and David Rohde. 2019. <span>“Causal Inference with <span>Bayes</span> Rule.”</span> <a href="http://arxiv.org/abs/1910.01510">http://arxiv.org/abs/1910.01510</a>.
+</div>
 <div id="ref-pearlCausalCalculusStatistical1996" class="csl-entry" role="doc-biblioentry">
 Pearl, Judea. 1996. <span>“A <span>Causal Calculus</span> for <span>Statistical Research</span>.”</span> In <em>Learning from <span>Data</span></em>, edited by Doug Fisher and Hans-J. Lenz, 112:23–33. Lecture <span>Notes</span> in <span>Statistics</span>. <span>New York, NY</span>: <span>Springer New York</span>. <a href="https://doi.org/10.1007/978-1-4612-2404-4_3">https://doi.org/10.1007/978-1-4612-2404-4_3</a>.
 </div>

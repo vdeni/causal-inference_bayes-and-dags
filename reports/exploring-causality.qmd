@@ -1023,7 +1023,7 @@ earlier. This really is the case with our calculations:
 nde + nie[1]
 ```
 
-### A less scary way to compute?
+## A less scary way to compute?
 
 Now, we've seemingly managed to identify and calculate the effect an
 intervention on $X$ would have on $Y$ when assuming different causal
@@ -1031,6 +1031,64 @@ relationships between variables. Until now, we've relied on integrals and
 simulations to calculate the effects (and have only dealt with point estimates).
 This wasn't necessarily very complicated, but also wasn't simple and
 straightforward.
+
+There's an interesting text by @lattimoreCausalInferenceBayes2019, where they
+claim that we can get estimates of causal effects using the Bayesian machinery,
+without having to use do-calculus at all. The idea is that we simultaneously fit
+a pre-intervention and post-intervention model. Sounds esoteric, but is
+relatively simple in practice.
+
+### Interventions according to the true DAG. 
+
+Let's return to the model which is in line with the true directed acyclic graph
+(DAG). We've already mentioned that interventions can be represented by removing
+all arrows going into the variable that's being intervened upon.
+@lattimoreCausalInferenceBayes2019 take this idea an model the pre-intervention
+and post-intervention states simultaneously. A key step is to connect all
+variables which are not being intervened upon with a common, latent parameter.
+I'll label those parameters $\theta$, and subscript them with the variable
+they're referring to. For example, $\theta_X$ would be the parameter connecting
+the pre-intervention variable $X$ with the post-intervention variable, which
+I'll label $X'$.
+
+So, keeping all that in mind, what we're trying to model is shown in
+@fig-simple-confounding-bayes-intervention-true.
+
+```{dot fig_true-dag_bayes-model}
+//| fig-align: center
+//| fig-cap: Graph with pre-intervention model on the left and post-intervention model on the right.
+//| label: fig-simple-confounding-bayes-intervention-true
+
+digraph G {
+    layout=dot;
+    rankdir=TB;
+    theta_Z[label=<&theta;<SUB>Z</SUB>>];
+    theta_Z -> {Z1; Z2}[style="dashed"];
+    theta_Y[label=<&theta;<SUB>Y</SUB>>];
+    theta_Y -> {Y1; Y2}[style="dashed"];
+    {rank="same"; theta_Z; theta_Y}
+    subgraph pre {
+        pencolor="none";
+        X1[label=<X<SUB>n</SUB>>];
+        Y1[label=<Y<SUB>n</SUB>>];
+        Z1[label=<Z<SUB>n</SUB>>];
+        X1 -> Y1[minlen=4];
+        Z1 -> X1
+        Z1 -> Y1;
+        {rank="same"; X1; Y1}
+    }
+    subgraph post {
+        pencolor="none";
+        X2[label="X'"];
+        Y2[label="Y'"];
+        Z2[label="Z'"];
+        X2 -> Y2[minlen=4];
+        Z2 -> Y2;
+        Z2 -> X2[style="invisible"; arrowhead="none"];
+        {rank="same"; X2; Y2}
+    }
+}
+```
 
 [^counterfactuals]: Hello, counterfactuals!
 [^mu_x]: I'm putting unknown values (e.g. $\mu_X$) instead of fixed values (e.g.
