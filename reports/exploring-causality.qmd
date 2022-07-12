@@ -582,7 +582,7 @@ To confirm that our calculation is correct, we'll also simulate a new set of $Y$
 values, with $X = 6$:
 
 ```{julia}
-N_sim = 100000
+N_sim = 100_000
 
 x_i = 6
 
@@ -952,12 +952,37 @@ QuadGK.quadgk(integral,
               Inf)
 ```
 
-Alternatively, we could calculate
+Alternatively, for example, we could simulate data corresponding to the
+given definition of the natural direct effect:
 
-$$
-\frac{1}{N} \sum_z [\text{E}(Y | X = 6, Z = z) - \text{E}(Y | X = 0, Z = z)]
-    \times p(Z = z | X = 0)
-$$
+```{julia}
+# distribution of Z when X is set to 0
+Z_0_distr = Distributions.Normal(b_xz * 0, s_Z)
+
+# random draws from the distribution of Z when X is set to 0
+Z_0 = Random.rand(Z_0_distr,
+                  10_000)
+
+#= distributions corresponding to the combinations of X = {0, 6} and various
+simulated Z values =#
+Y_0_distr = Distributions.Normal.(b_xy * 0 .+ Z_0)
+Y_6_distr = Distributions.Normal.(b_xy * 6 .+ Z_0)
+
+# draws 50 values from each distribution
+Y_0 = Random.rand.(Y_0_distr,
+                   50)
+Y_6 = Random.rand.(Y_6_distr,
+                   50)
+
+# get mean for each set of draws
+Y_0 = map(mean,
+          Y_0)
+Y_6 = map(mean,
+          Y_6)
+
+# mean of the difference
+mean(Y_6 .- Y_0)
+```
 
 ### A less scary way to compute
 
