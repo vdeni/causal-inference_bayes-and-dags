@@ -1090,6 +1090,81 @@ digraph G {
 }
 ```
 
+Let's fit this model in `Turing.jl`:
+
+```{julia}
+Turing.@model function simul_model(X,
+                                   Y,
+                                   Z)
+    mu_Z ~ Turing.Normal(2, 1)
+    s_Z ~ Turing.Exponential(1)
+
+    Z ~ Turing.Normal(mu_Z, s_Z)
+
+    mu_Y ~ Turing.Normal(2, 1)
+    s_Y ~ Turing.Exponential(1)
+
+    s_X ~ Turing.Exponential(1)
+
+    b_ZX ~ Turing.Normal(2, 1)
+    b_XY ~ Turing.Normal(2, 1)
+    b_ZY ~ Turing.Normal(2, 1)
+
+    for i in eachindex(X)
+        X[i] ~ Turing.Normal(Z[i] * b_ZX,
+                             s_X)
+
+        Y[i] ~ Turing.Normal(X[i] * b_XY + Z[i] * b_ZY,
+                             s_Y)
+    end
+
+    Z_prime ~ Turing.Normal(mu_Z, s_Z)
+
+    X_prime = 6
+
+    Y_prime_distr = Turing.Normal(X_prime * b_XY + Z_prime * b_ZY,
+                                  s_Y)
+
+    Y_prime = Random.rand(Y_prime_distr, 50)
+
+    return Y_prime
+end
+
+chains_simul = Turing.sample(simul_model(X,
+                                         Y,
+                                         Z),
+                             Turing.NUTS(1000,
+                                         0.80),
+                             Turing.MCMCThreads(),
+                             1000,
+                             4)
+
+Y_prime = Turing.generated_quantities(simul_model(X,
+                                                  Y,
+                                                  Z),
+                                      chains_simul)
+
+Y_prime_exp = map(mean,
+                  Y_prime) |>
+    vec
+
+mean(Y_prime_exp) |>
+    display
+
+quantile(Y_prime_exp,
+         [0.1, 0.9]) |>
+    display
+```
+
+First, I've coded the model using `Turing.jl`. After sampling from the joint
+model, I've asked `Turing` to generate quantities --- i.e. `Y_prime` --- from
+the model. For each iteration of the MCMC, `Y_prime` holds 50 samples from the
+distribution of $Y'$. After extracting the `Y_prime` values, I've calculated the
+mean of each sample of size 50, and then the mean of those means. What we get is
+suspiciously similar to the expected value we've calculated in 
+@interventions-acccording-to-the-true-dag. This seems nice. However, as a sanity
+check, let's also try calculating the values implied by the wrong DAG.
+
 [^counterfactuals]: Hello, counterfactuals!
 [^mu_x]: I'm putting unknown values (e.g. $\mu_X$) instead of fixed values (e.g.
 1) because the DAG, by itself, does not imply any specific form of the
