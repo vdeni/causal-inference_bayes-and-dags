@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.651">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Denis Vlašiček">
+<meta name="dcterms.date" content="2022-07-13">
+
+<title>Exploring causal inference with DAGs and Bayesian models</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+<script src="exploring-causality_files/libs/clipboard/clipboard.min.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/quarto.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/popper.min.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="exploring-causality_files/libs/quarto-html/anchor.min.js"></script>
+<link href="exploring-causality_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="exploring-causality_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="exploring-causality_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="exploring-causality_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="exploring-causality_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#case-1---three-variables-with-simple-confounding" id="toc-case-1---three-variables-with-simple-confounding" class="nav-link active" data-scroll-target="#case-1---three-variables-with-simple-confounding">Case 1 - three variables with simple confounding</a>
+  <ul class="collapse">
+  <li><a href="#linear-regression-and-causal-dags" id="toc-linear-regression-and-causal-dags" class="nav-link" data-scroll-target="#linear-regression-and-causal-dags">Linear regression and causal DAGs</a></li>
+  <li><a href="#bayesian-networks-generative-models-and-whatnot" id="toc-bayesian-networks-generative-models-and-whatnot" class="nav-link" data-scroll-target="#bayesian-networks-generative-models-and-whatnot">Bayesian networks, generative models and whatnot</a></li>
+  <li><a href="#predicting-the-effects-of-interventions" id="toc-predicting-the-effects-of-interventions" class="nav-link" data-scroll-target="#predicting-the-effects-of-interventions">Predicting the effects of interventions</a>
+  <ul class="collapse">
+  <li><a href="#sec-interventions-acccording-to-the-true-dag" id="toc-sec-interventions-acccording-to-the-true-dag" class="nav-link" data-scroll-target="#sec-interventions-acccording-to-the-true-dag">Interventions according to the true DAG</a></li>
+  <li><a href="#interventions-according-to-the-wrong-dag" id="toc-interventions-according-to-the-wrong-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</a></li>
+  </ul></li>
+  <li><a href="#a-less-scary-way-to-compute" id="toc-a-less-scary-way-to-compute" class="nav-link" data-scroll-target="#a-less-scary-way-to-compute">A less scary way to compute?</a>
+  <ul class="collapse">
+  <li><a href="#interventions-according-to-the-true-dag" id="toc-interventions-according-to-the-true-dag" class="nav-link" data-scroll-target="#interventions-according-to-the-true-dag">Interventions according to the true DAG</a></li>
+  <li><a href="#interventions-according-to-the-wrong-dag-1" id="toc-interventions-according-to-the-wrong-dag-1" class="nav-link" data-scroll-target="#interventions-according-to-the-wrong-dag-1">Interventions according to the wrong DAG</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exploring causal inference with DAGs and Bayesian models</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Denis Vlašiček </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 13, 2022</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+</header>
+
+<p>Lately, I’ve been reading quite a lot about causal inference in statistics and the various approaches developed through the decades. Pearl’s framework, which relies on directed acyclic graphs (DAGs), resonated with me the most; I really like DAGs as a way of expressing ideas about causality, and as a tool for tackling causal questions and building causal models.</p>
+<p>As I’ve been focused on Bayesian modeling for the past couple of years, I’ve found the generative modeling approach to be quite a useful way of approaching data analysis. The directed acyclic graph approach and the generative modeling approach seem to have a lot in common. However, I still feel like a difference is being made between the two. Because of this (and other pedagogic reasons), I’ve decided to explore some simple causal setups to gain (hopefully) a better understanding of both causal inference and the DAG/generative modeling frameworks.</p>
+<section id="case-1---three-variables-with-simple-confounding" class="level1">
+<h1>Case 1 - three variables with simple confounding</h1>
+<p>The first case I’m going to look at is a simple three-variable case where one variable acts as a confounder of the causal relationships of the remaining two variables. We’ll have a variable <span class="math inline">\(X\)</span> that exerts a causal influence on a variable <span class="math inline">\(Y\)</span>. We’ll also have a variable <span class="math inline">\(Z\)</span> that has a causal effect on both <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, making <span class="math inline">\(Z\)</span> a confounder of the causal relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. This model can be represented by the following directed acyclic graph (DAG), where each arrow represents the causal effect which the variable at the arrow’s tail has on the variable at the arrow’s head (e.g.&nbsp;<span class="math inline">\(X\)</span> has a causal effect on <span class="math inline">\(Y\)</span>):</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-three-var-confounding" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- X --> <g id="node1" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y --> <g id="node2" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> <!-- Z --> <g id="node3" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Z&#45;&gt;X --> <g id="edge2" class="edge">
+<title>
+Z-&gt;X
+</title>
+<path fill="none" stroke="black" d="M76.64,-74.15C68.12,-64.69 56.91,-52.24 47.31,-41.56"></path> <polygon fill="black" stroke="black" points="49.63,-38.92 40.34,-33.82 44.43,-43.6 49.63,-38.92"></polygon> </g> <!-- Z&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 1: Three variables, simple confounding.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>In the graph pictured in <a href="#fig-three-var-confounding">Figure&nbsp;1</a> there are two paths between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y.\)</span> The first path is the direct one, going from <span class="math inline">\(X\)</span> to <span class="math inline">\(Y\)</span> (<span class="math inline">\(X \textrightarrow Y\)</span>). The second path is an indirect one, and goes over the <span class="math inline">\(Z\)</span> variable: <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span>.</p>
+<p>I’ve mentioned earlier that the direction of the arrows tells us the direction of the causal effects. Therefore, we can say that the path <span class="math inline">\(X \textrightarrow Y\)</span> is causal. However, the path <span class="math inline">\(X \textleftarrow Z \textrightarrow Y\)</span> is not a causal path — starting from the left, we have an arrow going into <span class="math inline">\(X\)</span> from <span class="math inline">\(Z\)</span>, and then an arrow going from <span class="math inline">\(Z\)</span> into <span class="math inline">\(Y\)</span>. Since this path starts with an arrow pointing <em>into</em> <span class="math inline">\(X\)</span>, this makes it a <em>backdoor path</em> between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>.</p>
+<p>The idea of backdoor paths is one of the central ideas in Pearl’s framework. Backdoor paths are not causal, and create problems when trying to estimate causal effects. In the graph in <a href="#fig-three-var-confounding">Figure&nbsp;1</a>, we’d have to somehow close the backdoor path in order to obtain an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. In this case, the path can be closed by adjusting for the <span class="math inline">\(Z\)</span> variable. We’ll see how to do that in a bit.</p>
+<p>I’ll first set up the Julia environment and simulate some values for the variables <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span>.</p>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Pkg</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">Pkg</span>.<span class="fu">activate</span>(<span class="st">".."</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Distributions</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Random</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Statistics</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">StatsModels</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Turing</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">GLM</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">DataFrames</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Markdown</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">StatsPlots</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">QuadGK</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="fu">joinpath</span>(<span class="st">".."</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"helpers"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"text-formatting.jl"</span>))</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">include</span>(<span class="fu">joinpath</span>(<span class="st">".."</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"helpers"</span>,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"plots.jl"</span>))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="bu">Random</span>.<span class="fu">seed!</span>(<span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, let’s simulate data from the data-generating process described in <a href="#fig-three-var-confounding">Figure&nbsp;1</a>. For simplicity, I’ll assume all variables are distributed normally with the same standard deviation <span class="math inline">\(\sigma = 1\)</span>, but with different means. Also for simplicity, I’ll assume that the relationships between the variables can be described by a simple linear model. Therefore, we have:</p>
+<p><span class="math display">\[\begin{align}
+    Z &amp;\sim \text{normal}(1, 1) \\
+    x_i &amp;\sim \text{normal}(\mu_{x_i}, 1) \\
+    y_i &amp;\sim \text{normal}(\mu_{y_i}, 1) \\
+    \mu_{x_i} &amp;= 3 z_i \\
+    \mu_{y_i} &amp;= 2 x_i + 4 z_i,\; \text{for}\; i \in \{1, \ldots, N\}
+\end{align}\]</span></p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-three-var-confounding-effs" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="260pt" height="133pt" viewbox="0.00 0.00 260.00 132.80" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 128.8)">
+<title>
+effects_G
+</title>
+<!-- X -->
+<g id="node1" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y --> <g id="node2" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="225" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="225" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.12,-18C88.68,-18 148.6,-18 187.51,-18"></path> <polygon fill="black" stroke="black" points="187.89,-21.5 197.89,-18 187.89,-14.5 187.89,-21.5"></polygon> <text text-anchor="middle" x="126" y="-25.2" font-family="Times,serif" font-size="14.00">b_XY = 2</text> </g> <!-- Z --> <g id="node3" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="126" cy="-106.8" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="126" y="-102.6" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Z&#45;&gt;X --> <g id="edge2" class="edge">
+<title>
+Z-&gt;X
+</title>
+<path fill="none" stroke="black" d="M110.09,-91.85C94.07,-77.81 69.16,-55.97 50.79,-39.86"></path> <polygon fill="black" stroke="black" points="52.69,-36.87 42.87,-32.91 48.08,-42.14 52.69,-36.87"></polygon> <text text-anchor="middle" x="113.28" y="-58.2" font-family="Times,serif" font-size="14.00">b_ZX = 3</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M141.91,-91.85C157.93,-77.81 182.84,-55.97 201.21,-39.86"></path> <polygon fill="black" stroke="black" points="203.92,-42.14 209.13,-32.91 199.31,-36.87 203.92,-42.14"></polygon> <text text-anchor="middle" x="211.28" y="-58.2" font-family="Times,serif" font-size="14.00">b_ZY = 4</text> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 2: Causal effects for three variables, simple confounding scenario.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>With that in mind, I’ll simulate the data and put it in a data frame:</p>
+<div class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>Z_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>);</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>N <span class="op">=</span> <span class="fl">1000</span> <span class="co"># number of simulated draws</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_distr,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                N)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># create X values</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>x_mu <span class="op">=</span> <span class="fl">3</span> <span class="op">*</span> Z</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>X_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(x_mu, <span class="fl">1</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(X_distr)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># create Y values</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>y_mu <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> X <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> Z</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>Y_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(y_mu, <span class="fl">1</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>Y <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_distr)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y"</span> <span class="op">=&gt;</span> Y,</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"X"</span> <span class="op">=&gt;</span> X,</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Z"</span> <span class="op">=&gt;</span> Z)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>d[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="op">:</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+
+<div class="data-frame"><p>10 rows × 3 columns</p><table class="data-frame table table-sm table-striped"><thead><tr><th></th><th>Y</th><th>X</th><th>Z</th></tr><tr><th></th><th title="Float64">Float64</th><th title="Float64">Float64</th><th title="Float64">Float64</th></tr></thead><tbody><tr><th>1</th><td>10.5775</td><td>3.24194</td><td>0.929417</td></tr><tr><th>2</th><td>13.7239</td><td>4.29011</td><td>1.53148</td></tr><tr><th>3</th><td>-1.27323</td><td>-0.874445</td><td>0.193148</td></tr><tr><th>4</th><td>38.1601</td><td>11.2986</td><td>3.45699</td></tr><tr><th>5</th><td>16.9501</td><td>4.62647</td><td>2.16487</td></tr><tr><th>6</th><td>10.6161</td><td>3.45576</td><td>1.26756</td></tr><tr><th>7</th><td>26.2414</td><td>7.90164</td><td>2.74993</td></tr><tr><th>8</th><td>0.779545</td><td>-0.624594</td><td>0.173979</td></tr><tr><th>9</th><td>-2.50255</td><td>-1.42419</td><td>-0.0427524</td></tr><tr><th>10</th><td>6.94653</td><td>2.12588</td><td>0.670866</td></tr></tbody></table></div>
+</div>
+</div>
+<section id="linear-regression-and-causal-dags" class="level2">
+<h2 class="anchored" data-anchor-id="linear-regression-and-causal-dags">Linear regression and causal DAGs</h2>
+<p>I’ve mentioned earlier that we have to somehow close the backdoor path over <span class="math inline">\(Z\)</span> if we want to get an unbiased estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. Since we’re dealing with simple linear models, we’ll close the backdoor path by including <span class="math inline">\(Z\)</span> as a predictor in a multiple linear regression model, as this will adjust for its effect.</p>
+<p>But first, let’s fit the model without including <span class="math inline">\(Z\)</span> to see what estimate of the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> we’ll get. When simulating data, we’ve set the <span class="math inline">\(b\)</span> coefficient for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> to <span class="math inline">\(b_{XY} = 2\)</span>, so what we’d expect is an estimate <span class="math inline">\(\hat{b}_{XY} \ne 2\)</span>.</p>
+<p>(Note: I’m naming the coefficients so that the left variable in the subscript refers to the variable causing the change, and the right variable in the subscript refers to the variable being changed. Therefore, <span class="math inline">\(b_{XY}\)</span> denotes the coefficient which represents our belief about the causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>.)</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>fit_y_x <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                 d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
+
+Y ~ 1 + X
+
+Coefficients:
+─────────────────────────────────────────────────────────────────────────
+                Coef.  Std. Error       t  Pr(&gt;|t|)  Lower 95%  Upper 95%
+─────────────────────────────────────────────────────────────────────────
+(Intercept)  0.499453   0.0696148    7.17    &lt;1e-11   0.362844   0.636061
+X            3.17275    0.0153718  206.40    &lt;1e-99   3.14259    3.20292
+─────────────────────────────────────────────────────────────────────────</code></pre>
+</div>
+</div>
+<p>As can be seen, we get <span class="math inline">\(\hat{b}_{XY} = 3.17\)</span>, which is different than the value set in the simulation.</p>
+<p>As mentioned earlier, we should be able to get an unbiased estimate of the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> if we control for the confounder <span class="math inline">\(Z\)</span>. Therefore, let’s try fitting another model, this time including <span class="math inline">\(Z\)</span> as a variable in the regression model alongside <span class="math inline">\(X\)</span>.</p>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> StatsModels.<span class="pp">@formula</span>(Y <span class="op">~</span> X <span class="op">+</span> Z)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>fit_y_xz <span class="op">=</span> GLM.<span class="fu">lm</span>(f,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                  d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
+
+Y ~ 1 + X + Z
+
+Coefficients:
+────────────────────────────────────────────────────────────────────────────
+                   Coef.  Std. Error      t  Pr(&gt;|t|)   Lower 95%  Upper 95%
+────────────────────────────────────────────────────────────────────────────
+(Intercept)  -0.00914928   0.0453893  -0.20    0.8403  -0.0982188  0.0799203
+X             2.00207      0.0311896  64.19    &lt;1e-99   1.94087    2.06328
+Z             3.97688      0.100799   39.45    &lt;1e-99   3.77908    4.17468
+────────────────────────────────────────────────────────────────────────────</code></pre>
+</div>
+</div>
+<p>Now we get a <span class="math inline">\(\hat{b}_{XY}\)</span> coefficient which corresponds to the one we’ve coded up while simulating the data. The estimate of the effect of <span class="math inline">\(Z\)</span> on <span class="math inline">\(Y\)</span> is also in line with the value which we’ve coded up.</p>
+</section>
+<section id="bayesian-networks-generative-models-and-whatnot" class="level2">
+<h2 class="anchored" data-anchor-id="bayesian-networks-generative-models-and-whatnot">Bayesian networks, generative models and whatnot</h2>
+<p>Okay, now to the part that’s a bit more tricky. I want to explore the relationships between Bayesian networks and causal directed acyclic graphs. If my understanding is correct, a Bayesian network is, in a way, a subset of a causal directed acyclic graph — it encodes the relationships between the variables under investigation, but doesn’t make additional assumptions which are necessary for causal inference. However, a Bayesian network that corresponds to the true DAG should be able to provide us with unbiased estimates of the causal effects. A Bayesian network that does not correspond to the true DAG, on the other hand, should provide biased estimates of the causal effects, but should still be able to make accurate predictions. This may be a fine distinction, and is something I also aim to explore further down.</p>
+<p>I’ll fit the model represented in <a href="#fig-three-var-confounding-effs">Figure&nbsp;2</a> using the <code>Turing.jl</code> library. The model can be coded as follows:</p>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz</span>(X,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                                      Y,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                                      Z)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    mu_z <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    s_Z <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_z, s_Z)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    b_ZX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_ZX,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>                             s_X)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>gen_model_y_xz (generic function with 2 methods)</code></pre>
+</div>
+</div>
+<p>Next, we use the NUTS sampler (the same one <em>Stan</em> is using) to get samples from the posterior distribution:</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>chains <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz</span>(d.X,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                                      d.Y,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                                      d.Z),</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                       Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                                   <span class="fl">0.80</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                       Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">3000</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                       <span class="fl">4</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<div class="ansi-escaped-output">
+<pre>Summary Statistics
+ <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
+ <span class="ansi-bright-black-fg">     Symbol </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg">  Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg">    Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span>  ⋯
+         s_X    1.0270    0.0231     0.0002    0.0002   11048.3436    1.0000   ⋯
+         s_Y    1.0090    0.0226     0.0002    0.0002   12533.8524    0.9998   ⋯
+        mu_z    1.0353    0.0327     0.0003    0.0003   11445.4768    1.0003   ⋯
+         s_Z    1.0293    0.0229     0.0002    0.0002   11446.8643    1.0004   ⋯
+        b_ZX    3.0249    0.0224     0.0002    0.0002   11874.1650    0.9999   ⋯
+        b_XY    2.0084    0.0310     0.0003    0.0004    7162.2305    0.9999   ⋯
+        b_ZY    3.9518    0.0960     0.0009    0.0011    7083.3842    0.9999   ⋯
+<span class="ansi-cyan-fg">                                                                1 column omitted</span>
+</pre>
+</div>
+</div>
+</div>
+<p>Indeed, the parameters estimated in this way correspond to the ones we’ve simulated earlier. Now, this probably isn’t that surprising, given that our model is coded in line with the true DAG. Still, that <em>is</em> comforting, I guess.</p>
+<p>I’ll try repeating the analysis using a distribution for the <span class="math inline">\(Z\)</span> variable which I know to be incorrect - the Cauchy distribution with location 3 and scale 1.</p>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">gen_model_y_xz_cauchy</span>(X,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                                             Y,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                                             Z)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    b_ZX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Cauchy</span>(<span class="fl">3</span>, <span class="fl">1</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_ZX,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>                             s_X)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<pre><code>gen_model_y_xz_cauchy (generic function with 2 methods)</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>chains_cauchy <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">gen_model_y_xz_cauchy</span>(d.X,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                                                    d.Y,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                                                    d.Z),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="fl">0.80</span>),</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">3000</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_cauchy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<div class="ansi-escaped-output">
+<pre>Summary Statistics
+ <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
+ <span class="ansi-bright-black-fg">     Symbol </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg">  Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg">    Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span>  ⋯
+         s_X    1.0271    0.0233     0.0002    0.0002   10125.4121    0.9998   ⋯
+         s_Y    1.0095    0.0224     0.0002    0.0002    9090.5353    0.9998   ⋯
+        b_ZX    3.0250    0.0227     0.0002    0.0002    9856.1925    1.0003   ⋯
+        b_XY    2.0077    0.0304     0.0003    0.0004    6590.7825    1.0005   ⋯
+        b_ZY    3.9550    0.0946     0.0009    0.0013    6374.1692    1.0005   ⋯
+<span class="ansi-cyan-fg">                                                                1 column omitted</span>
+</pre>
+</div>
+</div>
+</div>
+<p>Luckily, this also seems to work. So we can be somewhat off.</p>
+<p>Now, let’s examine a DAG we know to be false, and compare the predictions of a model that’s coded in line with that DAG, with those of the model coded in line with the true DAG. If my understanding is correct, both the causal DAG and the Bayesian network (i.e.&nbsp;the model coded up in line with the incorrect DAG) should be able to make predictions of similar accuracy. Moreover, they should make (practically) equivalent predictions. That would mean that values <span class="math inline">\(\hat{y}^{cDAG}\)</span> predicted from the causal DAG should be (practically) identical to the values <span class="math inline">\(\hat{y}^{BN}\)</span> predicted by a Bayesian network.</p>
+<p>To check this claim, I’ll try modeling the data according to the following graph, which we know to be false, as here we have a causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Z\)</span>, and not the other way around:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-three-var-confounding-x-confound" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+<path fill="none" stroke="red" d="M40.34,-33.82C48.86,-43.29 60.06,-55.73 69.67,-66.41"></path> <polygon fill="red" stroke="red" points="67.35,-69.06 76.64,-74.15 72.55,-64.38 67.35,-69.06"></polygon> </g> <!-- X&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 3: The obviously false DAG.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This graph implies a different set of equations representing the relationships between the variables<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
+<p><span class="math display">\[\begin{align}
+    X &amp;\sim \text{normal}(\mu_X, \sigma_X) \\
+    z_i &amp;\sim \text{normal}(\mu_{z_i}, \sigma_Z) \\
+    y_i &amp;\sim \text{normal}(\mu_{y_i}, \sigma_Y) \\
+    \mu_{z_i} &amp;= b_{XZ} x_i \\
+    \mu_{y_i} &amp;= b_{XY} x_i + b_{ZY} z_i,\; \text{for}\; i \in \{1, \ldots, N\}
+\end{align}\]</span></p>
+<p>I’ll again code and fit the model using <code>Turing.jl</code>:</p>
+<div class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">bn_model_y_xz</span>(X,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                                     Y,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                     Z)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    mu_X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_X, s_X)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    s_Z <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>        Z[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XZ,</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>                             s_Z)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>chains_x_conf <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">bn_model_y_xz</span>(d.X,</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>                                            d.Y,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>                                            d.Z),</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>                                          <span class="fl">0.80</span>),</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>                              Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">3000</span>,</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                              <span class="fl">4</span>)</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div class="ansi-escaped-output">
+<pre>Summary Statistics
+ <span class="ansi-bold"> parameters </span> <span class="ansi-bold">    mean </span> <span class="ansi-bold">     std </span> <span class="ansi-bold"> naive_se </span> <span class="ansi-bold">    mcse </span> <span class="ansi-bold">        ess </span> <span class="ansi-bold">    rhat </span>  ⋯
+ <span class="ansi-bright-black-fg">     Symbol </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg">  Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span> <span class="ansi-bright-black-fg">    Float64 </span> <span class="ansi-bright-black-fg"> Float64 </span>  ⋯
+        mu_X    3.0681    0.1070     0.0010    0.0010   10267.3033    0.9999   ⋯
+         s_X    3.3204    0.0738     0.0007    0.0007   10068.2026    1.0003   ⋯
+         s_Y    1.0093    0.0222     0.0002    0.0002   10091.7275    1.0003   ⋯
+         s_Z    0.3306    0.0074     0.0001    0.0001   11220.0495    1.0000   ⋯
+        b_XZ    0.3136    0.0023     0.0000    0.0000   19690.1004    0.9998   ⋯
+        b_XY    2.0074    0.0307     0.0003    0.0004    6232.0981    1.0000   ⋯
+        b_ZY    3.9556    0.0955     0.0009    0.0013    6251.3828    1.0000   ⋯
+<span class="ansi-cyan-fg">                                                                1 column omitted</span>
+</pre>
+</div>
+</div>
+</div>
+<p>So, the estimates for <span class="math inline">\(b_{XY}\)</span> and <span class="math inline">\(b_{ZY}\)</span> are actually quite fine. The coefficient for the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Z\)</span> (<span class="math inline">\(b_{XZ}\)</span>) is, of course, gibberish, if interpreted causally. But how do the predicted <span class="math inline">\(Y\)</span> values from this model compare to the values predicted from the true DAG?</p>
+<p>Let’s compare each of these models’ <span class="math inline">\(\hat{y}\)</span> values to the observed <span class="math inline">\(Y\)</span> values, as well as the models’ predictions to each other. I’ll use only the mean estimates of the parameters, disregarding the uncertainty.</p>
+<div class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>pred_gen_model_y_xz <span class="op">=</span> <span class="fu">gen_model_y_xz</span>(d.X,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                                          N),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                                     d.Z)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>y_hat_dag <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_gen_model_y_xz,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                           chains)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>pred_bn_model_y_xz <span class="op">=</span> <span class="fu">bn_model_y_xz</span>(d.X,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>                                   <span class="fu">fill</span>(<span class="cn">missing</span>,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>                                        N),</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>                                   d.Z)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>y_hat_bn <span class="op">=</span> Turing.<span class="fu">predict</span>(pred_bn_model_y_xz,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>                          chains_x_conf)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>d_dag_bn <span class="op">=</span> DataFrames.<span class="fu">DataFrame</span>(<span class="st">"Y_dag"</span> <span class="op">=&gt;</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_dag)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_bn"</span> <span class="op">=&gt;</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>                                    MCMCChains.<span class="fu">summarystats</span>(y_hat_bn)[<span class="op">:</span>, <span class="op">:</span>mean],</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Y_obs"</span> <span class="op">=&gt;</span> Y)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>p_dag_obs <span class="op">=</span> <span class="fu">compare_yhat</span>(d_dag_bn;</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>                         y_pred_1_name <span class="op">=</span> <span class="st">"Y_dag"</span>,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>                         y_pred_2_name <span class="op">=</span> <span class="st">"Y_obs"</span>)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>p_bn_obs <span class="op">=</span> <span class="fu">compare_yhat</span>(d_dag_bn;</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>                        y_pred_1_name <span class="op">=</span> <span class="st">"Y_bn"</span>,</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>                        y_pred_2_name <span class="op">=</span> <span class="st">"Y_obs"</span>)</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>p_dag_bn <span class="op">=</span> <span class="fu">compare_yhat</span>(d_dag_bn)</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(p_dag_obs,</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>     p_bn_obs,</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>     p_dag_bn,</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>     layout <span class="op">=</span> (<span class="fl">3</span>, <span class="fl">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<p><img src="exploring-causality_files/figure-html/cell-12-output-1.svg" class="img-fluid"></p>
+</div>
+</div>
+<p>Aside from seemingly being very good at predicting the <span class="math inline">\(Y\)</span> values, both models seem to make, for all practical intents and purposes, identical predictions.</p>
+</section>
+<section id="predicting-the-effects-of-interventions" class="level2">
+<h2 class="anchored" data-anchor-id="predicting-the-effects-of-interventions">Predicting the effects of interventions</h2>
+<p>But what does this all mean for predicting the effects of interventions, as one would do using Pearl’s do-calculus, which assumes knowledge of the causal mechanism? According to <span class="citation" data-cites="pearlCausalInferenceStatistics2016">Pearl, Glymour, and Jewell (<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">2016</a>)</span> an intervention can be represented in a DAG by removing all arrows going into the intervened upon variable. For example, here, we’ll try predicting the effect of an intervention that would set the value of <span class="math inline">\(X\)</span> to some <span class="math inline">\(x\)</span>, denoted <span class="math inline">\(do(X = x)\)</span>. Under such an intervention, our two competing DAGs would look like this:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-do-compare" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="386pt" height="116pt" viewbox="0.00 0.00 386.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 382,-112 382,4 -4,4"></polygon> <!-- X1 --> <g id="node1" class="node">
+<title>
+X1
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y1 --> <g id="node2" class="node">
+<title>
+Y1
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X1&#45;&gt;Y1 --> <g id="edge1" class="edge">
+<title>
+X1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> <!-- Z1 --> <g id="node3" class="node">
+<title>
+Z1
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Z1&#45;&gt;X1 --> <g id="edge2" class="edge">
+<title>
+Z1-&gt;X1
+</title>
+</g> <!-- Z1&#45;&gt;Y1 --> <g id="edge3" class="edge">
+<title>
+Z1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> <!-- X2 --> <g id="node4" class="node">
+<title>
+X2
+</title>
+<ellipse fill="none" stroke="black" cx="225" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="225" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y2 --> <g id="node5" class="node">
+<title>
+Y2
+</title>
+<ellipse fill="none" stroke="black" cx="351" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="351" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X2&#45;&gt;Y2 --> <g id="edge4" class="edge">
+<title>
+X2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M252.07,-18C272.66,-18 293.25,-18 313.84,-18"></path> <polygon fill="black" stroke="black" points="313.95,-21.5 323.95,-18 313.95,-14.5 313.95,-21.5"></polygon> </g> <!-- Z2 --> <g id="node6" class="node">
+<title>
+Z2
+</title>
+<ellipse fill="none" stroke="black" cx="288" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="288" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- X2&#45;&gt;Z2 --> <g id="edge6" class="edge">
+<title>
+X2-&gt;Z2
+</title>
+<path fill="none" stroke="black" d="M238.34,-33.82C246.86,-43.29 258.06,-55.73 267.67,-66.41"></path> <polygon fill="black" stroke="black" points="265.35,-69.06 274.64,-74.15 270.55,-64.38 265.35,-69.06"></polygon> </g> <!-- Z2&#45;&gt;Y2 --> <g id="edge5" class="edge">
+<title>
+Z2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M301.36,-74.15C309.88,-64.69 321.09,-52.24 330.69,-41.56"></path> <polygon fill="black" stroke="black" points="333.57,-43.6 337.66,-33.82 328.37,-38.92 333.57,-43.6"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 4: Causal DAGs when we simulate a <span class="math inline">\(do(X = x)\)</span> intervention. True DAG left, wrong DAG right.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>So, we could ask, for example, what is the expected value of the <span class="math inline">\(Y\)</span> variable if we were to conduct an intervention that would set the value of <span class="math inline">\(X\)</span> to 6. We are interested in <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span>.</p>
+<p>Given that we know the equations of the true-data generating process, we can calculate this. We know that each <span class="math inline">\(y_i\)</span> value is a draw from a normal distribution with location <span class="math inline">\(\mu_{y_i}\)</span> and scale <span class="math inline">\(1\)</span>. We further know that the value of <span class="math inline">\(\mu_{y_i}\)</span> is determined by the values which the variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span> take for a chosen <span class="math inline">\(i\)</span> (i.e.&nbsp;the values <span class="math inline">\(X = x_i\)</span> and <span class="math inline">\(Z = z_i\)</span>).</p>
+<p>Since we’ve made the intervention <span class="math inline">\(do(X = 6)\)</span>, our first step will be to replace <span class="math inline">\(x_i\)</span> with <span class="math inline">\(6\)</span> — imagine that, somehow, we can intervene into reality and set <span class="math inline">\(X = 6\)</span> for each observation. Since the values of the <span class="math inline">\(Z\)</span> variable also influence the values of <span class="math inline">\(Y\)</span>, we’ll average over the <span class="math inline">\(Z\)</span> values.</p>
+<p>This was our starting model specification:</p>
+<p><span class="math display">\[\begin{align}
+    Z &amp;\sim \text{normal}(1, 1) \\
+    x_i &amp;\sim \text{normal}(\mu_{x_i}, 1) \\
+    y_i &amp;\sim \text{normal}(\mu_{y_i}, 1) \\
+    \mu_{x_i} &amp;= 3 z_i \\
+    \mu_{y_i} &amp;= 2 x_i + 4 z_i
+\end{align}\]</span></p>
+<p>We’ll replace the second line with a constant (the <span class="math inline">\(\mu_{x_i}\)</span> term is dropped because there is no longer a distribution of <span class="math inline">\(X\)</span>, since it’s been fixed to a constant):</p>
+<p><span class="math display">\[\begin{align}
+    Z &amp;\sim \text{normal}(1, 1) \\
+    x_i &amp;= 6\; \text{for all}\; i\\
+    y_i &amp;\sim \text{normal}(\mu_{y_i}, 1) \\
+    \mu_{y_i} &amp;= 2 x_i + 4 z_i \\
+\end{align}\]</span></p>
+<p>We’ve said earlier that values of <span class="math inline">\(Y\)</span> depend on values of <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>, and so does the expected value of <span class="math inline">\(Y\)</span>, which is equal to <span class="math inline">\(\mu_{y_i}\)</span>:</p>
+<p><span class="math display">\[\begin{equation}
+    \mu_{y_i} = \text{E}(Y | X, Z).
+\end{equation}\]</span></p>
+<p>Next, given that we’ve set <span class="math inline">\(X = 6\)</span> through an intervention (and thus replaced <span class="math inline">\(x_i \sim \text{normal}(\mu_{x_i}, 1)\)</span> with a constant), we have:</p>
+<p><span class="math display">\[\begin{equation}
+    \text{E}(Y | X = 6, Z) = 2 \times 6 + 4 z_i
+\end{equation}\]</span></p>
+<p>Finally, we want to average over the values of <span class="math inline">\(Z\)</span> to get <span class="math inline">\(\text{E}(Y | X)\)</span>:</p>
+<p><span class="math display">\[\begin{align}
+    \text{E}(Y | X) &amp;= \text{E}(\text{E}(Y | X, Z)) \\
+                    &amp;= \int_{z \in Z}  \text{E}(Y | X = 6, Z = z) f_Z(z)\;
+                        \text{d}z \\
+                    &amp;= \int_{z \in Z}(2 \times 6 + 4z)f_Z(z)\, \text{d}z.
+\end{align}\]</span></p>
+<p>We can use the <code>QuadGK.jl</code> package to calculate this expectation. Here, we’ll rely on the fact that we know the distribution of <span class="math inline">\(Z\)</span>, as we’re looking for the effect of the intervention according to the true data-generating model.</p>
+<div class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(<span class="fl">1</span>, <span class="fl">1</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="fl">2</span> <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> z) <span class="op">*</span> Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>(16.00000000532549, 1.706489217754166e-7)</code></pre>
+</div>
+</div>
+<p>To confirm that our calculation is correct, we’ll also simulate a new set of <span class="math inline">\(Y\)</span> values, with <span class="math inline">\(X = 6\)</span>:</p>
+<div class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>N_sim <span class="op">=</span> <span class="fl">100_000</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>x_i <span class="op">=</span> <span class="fl">6</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>Z_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_distr,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>                      N_sim)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># create Y values</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>y_mu <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> x_i <span class="op">.+</span> <span class="fl">4</span> <span class="op">*</span> Z_prime</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>Y_x <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(y_mu, <span class="fl">1</span>)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>Y_x_fixed <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_x)</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_x_fixed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<pre><code>15.970828611632337</code></pre>
+</div>
+</div>
+<p>As we can see, we’re getting a very similar result. This gives us additional confidence that our calculation was correct.</p>
+<section id="sec-interventions-acccording-to-the-true-dag" class="level3">
+<h3 class="anchored" data-anchor-id="sec-interventions-acccording-to-the-true-dag">Interventions according to the true DAG</h3>
+<p>Now, what’s the deal with the two models — how do we obtain <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span>? Let’s first look at the model corresponding to the true data-generating process.</p>
+<p>Our first step is to get from the <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> expression to <span class="math inline">\(\text{E}(Y | X = 6)\)</span>. The <span class="math inline">\(do(\cdot)\)</span> operator has special meaning in Pearl’s framework — it represents conducting an intervention that sets the value of one (or more) variables to some specific value. In our case, <span class="math inline">\(do(X = 6)\)</span> means conducting an intervention that sets all values of <span class="math inline">\(X\)</span> to 6. Therefore, within Pearl’s framework there’s a difference between <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> — which represents the expected value of the <span class="math inline">\(Y\)</span> variable if we were to <em>intervene</em> on <span class="math inline">\(X\)</span> so that all values of <span class="math inline">\(X\)</span> are set to 6 — and <span class="math inline">\(\text{E}(Y | X = 6)\)</span> — which is simply the expected value of <span class="math inline">\(Y\)</span> we <em>observe</em> for cases where <span class="math inline">\(X = 6\)</span>.</p>
+<p><span class="citation" data-cites="pearlCausalCalculusStatistical1996">Pearl (<a href="#ref-pearlCausalCalculusStatistical1996" role="doc-biblioref">1996</a>)</span> introduces a set of three rules, called the do-calculus, which allows us to transition from <span class="math inline">\(\text{E}(Y | do(X = 6))\)</span> to <span class="math inline">\(\text{E}(Y | X = 6)\)</span> if it’s possible given the DAG we’re relying on.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> According to these rules, we start with <span class="math inline">\(\text{E}(Y | do(X = 6), Z = z)\)</span> — according to our DAG, <span class="math inline">\(Y\)</span> depends both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>; it’s conditional on both. Furthermore, since we’re doing an intervention on <span class="math inline">\(X\)</span> we have <span class="math inline">\(do(X = 6)\)</span>; since we’re only observing the value of <span class="math inline">\(Z\)</span>, there’s no <span class="math inline">\(do(Z = z)\)</span> term, but only <span class="math inline">\(Z = z\)</span>.</p>
+<p>Since our goal is <span class="math inline">\(\text{E}(Y | X = 6)\)</span>, the first thing we’ll try doing is converting the <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span> — this would allow us to think about the effect of the intervention <span class="math inline">\(do(X = 6)\)</span> based on data which are not interventional (i.e.&nbsp;we haven’t actually collected data after making an intervention), but observational (we have just observed the world in a certain state). We’re allowed to do this if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span>, conditional on <span class="math inline">\(Z\)</span>, in a modified DAG where all arrows exiting <span class="math inline">\(X\)</span> are removed. This may be written as <span class="math inline">\((Y \perp X | Z)_{G_{\underline{X}}}\)</span>, where <span class="math inline">\(G_{\underline{X}}\)</span> stands for “graph where all arrows going out of <span class="math inline">\(X\)</span> are removed”. This graph is shown in <a href="#fig-three-var-confounding-x-out-mutil">Figure&nbsp;5</a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-three-var-confounding-x-out-mutil" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+effects_G
+</title>
+<!-- X -->
+<g id="node1" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- Y --> <g id="node2" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- X&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+X-&gt;Y
+</title>
+</g> <!-- Z --> <g id="node3" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Z&#45;&gt;X --> <g id="edge2" class="edge">
+<title>
+Z-&gt;X
+</title>
+<path fill="none" stroke="black" d="M76.64,-74.15C68.12,-64.69 56.91,-52.24 47.31,-41.56"></path> <polygon fill="black" stroke="black" points="49.63,-38.92 40.34,-33.82 44.43,-43.6 49.63,-38.92"></polygon> </g> <!-- Z&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 5: Graph with all arrows emanating from <span class="math inline">\(X\)</span> removed.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As we can seen, once we’ve removed the arrow <span class="math inline">\(X \textrightarrow Y\)</span>, and after conditioning on <span class="math inline">\(Z\)</span>, <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> really are independent. Therefore, we can replace <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> with <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>. The final step is adjusting for <span class="math inline">\(Z\)</span>, since it’s confounding the causal relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> <span class="citation" data-cites="pearlCausalInferenceStatistics2016">(<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">Pearl, Glymour, and Jewell 2016</a>)</span>. We do that by integrating over the values of <span class="math inline">\(Z\)</span>, which leads to a set of equations analogous to the one we’ve had when looking at the expectation from the true data-generating process. However, we’ll replace the hard-coded, true coefficient values, with our estimates:</p>
+<p><span class="math display">\[\begin{align}
+    \text{E}(Y | do(X = 6), Z) &amp;= \text{E}(Y | X = 6, Z) \\
+        &amp;= \text{E}(\text{E}(Y | X = 6)) \\
+        &amp;= \int_{z \in Z}\text{E}(Y | X = 6, z) f_Z(z)\,
+            \text{d}z \\
+        &amp;= \int_{z \in Z}(\hat{b}_{YX} \times 6 +
+            \hat{b}_{YZ} \times z)f_Z(z)\, \text{d}z.
+\end{align}\]</span></p>
+<p>Let’s take the posterior means of the parameter estimates for <span class="math inline">\(\hat{b}_{XY}\)</span> and <span class="math inline">\(\hat{b}_{ZY}\)</span>, that is <span class="math inline">\(b_{XY} = 2.01\)</span> and <span class="math inline">\(b_{ZY} = 3.95\)</span></p>
+<div class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>mu_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">3</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>s_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">6</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>b_zy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains)[<span class="fl">7</span>, <span class="op">:</span>mean]</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(mu_Z, s_Z)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> z) <span class="op">*</span> Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<pre><code>(16.141802104864944, 1.2496446976866825e-7)</code></pre>
+</div>
+</div>
+<p>Alternatively, we could do:</p>
+<div class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1</span> <span class="op">/</span> N <span class="op">*</span> <span class="fu">sum</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="17">
+<pre><code>16.13842621712317</code></pre>
+</div>
+</div>
+<p>The results align almost perfectly with the one obtained from the true model, which could have been expected, given that we’ve estimated both <span class="math inline">\(b_{XY}\)</span> and <span class="math inline">\(b_{ZY}\)</span> approximately correctly. So we basically just reran the previous calculation.</p>
+</section>
+<section id="interventions-according-to-the-wrong-dag" class="level3">
+<h3 class="anchored" data-anchor-id="interventions-according-to-the-wrong-dag">Interventions according to the wrong DAG</h3>
+<p>Now for the second model. As we’ve mentioned earlier, no arrows get deleted in this model, as there are no arrows entering <span class="math inline">\(X\)</span>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-wrong-dag-interv" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+<path fill="none" stroke="black" d="M40.34,-33.82C48.86,-43.29 60.06,-55.73 69.67,-66.41"></path> <polygon fill="black" stroke="black" points="67.35,-69.06 76.64,-74.15 72.55,-64.38 67.35,-69.06"></polygon> </g> <!-- X&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 6: DAG of the intervention <span class="math inline">\(do(X = 6)\)</span> in the wrong DAG.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>To get the total causal effect of <span class="math inline">\(do(X = 6)\)</span> on <span class="math inline">\(Y\)</span>, we won’t adjust for <span class="math inline">\(Z\)</span> because that would close the indirect, <em>causal</em> path <span class="math inline">\(X \textrightarrow Z \textrightarrow Y\)</span>. If we were to adjust for <span class="math inline">\(Z\)</span>, we’d close off a part of the effect of the intervention, given that — according to this DAG — the value of <span class="math inline">\(X\)</span> also influences the value <span class="math inline">\(Z\)</span> will take on.</p>
+<p>Keeping that in mind, let’s again apply the rules of do-calculus to see if, and how, we can get from <span class="math inline">\(\text{E}(Y | do(X = 6, Z))\)</span> to <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>. Again, our first step will be to try to turn <span class="math inline">\(do(X = 6)\)</span> into <span class="math inline">\(X = 6\)</span>. According to the rules, we can do that if <span class="math inline">\(X\)</span> is independent of <span class="math inline">\(Y\)</span> when all of the arrows emanating from <span class="math inline">\(X\)</span> are removed from the graph (and, possibly, while adjusting for <span class="math inline">\(Z\)</span>). The mutilated graph looks like this:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-wrong-dag-interv-mutil" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+Z-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M103.36,-74.15C111.88,-64.69 123.09,-52.24 132.69,-41.56"></path> <polygon fill="black" stroke="black" points="135.57,-43.6 139.66,-33.82 130.37,-38.92 135.57,-43.6"></polygon> </g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+</g> <!-- X&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+X-&gt;Y
+</title>
+</g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 7: Wrong DAG with arrows leaving <span class="math inline">\(X\)</span> removed.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We see that, even without adjusting for <span class="math inline">\(Z\)</span>, <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are in no way connected in this graph; there are no arrows connecting <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> either directly or indirectly. Therefore, we conclude that <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are independent in such a graph (<span class="math inline">\((Y \perp X)_{G_{\underline{X}}}\)</span>), and so it is justified to replace <span class="math inline">\(do(X = 6)\)</span> with <span class="math inline">\(X = 6\)</span> in our expression.</p>
+<p>Can we remove <span class="math inline">\(Z\)</span> from <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>? Seemingly not. <span class="math inline">\(Z\)</span> would have to be independent of <span class="math inline">\(Y\)</span> in our original graph, which we cannot achieve, even if we were to condition on <span class="math inline">\(X\)</span> because <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span> are directly related. So we, again, end up with <span class="math inline">\(\text{E}(Y | X = 6, Z)\)</span>.</p>
+<p>However, as mentioned earlier, we won’t be adjusting for <span class="math inline">\(Z\)</span> because its value is influenced by the value of <span class="math inline">\(X\)</span>; if <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span> through an intervention, <span class="math inline">\(Z\)</span> also changes. We have to keep that in mind if we want to get an estimate of the total causal effect <span class="math inline">\(X\)</span> has on <span class="math inline">\(Y\)</span>. So we’ll modify our expression, and mark the new variable as <span class="math inline">\(Z'\)</span>, keeping in mind that it represents the values that the <span class="math inline">\(Z\)</span> variable would obtain if the <span class="math inline">\(X\)</span> values were set to some <span class="math inline">\(x\)</span> (in our case, 6):<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> <span class="math inline">\(\text{E}(Y | do(X = 6), Z')\)</span>. According to our model,</p>
+<p><span class="math display">\[\begin{align}
+    \text{E}(Y | do(X = 6), Z') &amp;= \text{E}(Y | X = 6, Z') \\
+        &amp;= b_{XY} \times 6 + b_{ZY} \times Z'.
+\end{align}\]</span></p>
+<p>To obtain an estimate of <span class="math inline">\(\text{E}(Y | do(X = 6), Z)\)</span> we can take our posterior estimates of <span class="math inline">\(b_{XY}\)</span> and <span class="math inline">\(b_{ZY}\)</span>, simulate a set of <span class="math inline">\(Z'\)</span> and <span class="math inline">\(Y'\)</span> values, and calculate</p>
+<p><span class="math display">\[
+    \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6 +
+        \hat{b}_{ZY} \times z'_i)
+\]</span></p>
+<div class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>s_Z <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">4</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>b_xz <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">5</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">6</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>b_zy <span class="op">=</span> MCMCChains.<span class="fu">summarystats</span>(chains_x_conf)[<span class="fl">7</span>, <span class="op">:</span>mean]</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>Z_prime_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">6</span>, s_Z)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>Z_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_prime_distr,</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                      <span class="fl">10_000</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> b_zy <span class="op">*</span> Z_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<pre><code>19.476563750991136</code></pre>
+</div>
+</div>
+<p>Alternatively, if we rearrange the previous equation, we’ll notice that we’re really working with the expected value of the <span class="math inline">\(Z'\)</span> variable:</p>
+<p><span class="math display">\[\begin{align}
+    \text{E}(Y | X = 6, Z') &amp;= \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6
+        + \hat{b}_{ZY} \times z'_i) \\
+    &amp;= \hat{b}_{XY} \times 6 + \hat{b}_{ZY} \times
+        \underbrace{\frac{1}{N} \sum_i^N z'_i}_{\text{E(Z')}}.
+\end{align}\]</span></p>
+<p>According to our model, that is:</p>
+<p><span class="math display">\[
+    \text{E}(Z') = \mu_{z'_i} = b_{XZ} \times x_i,\; \text{where}\;
+        x_i = 6\; \forall\, i
+\]</span></p>
+<p>meaning that we can also estimate the total causal effect of <span class="math inline">\(do(X = x)\)</span> on <span class="math inline">\(Y\)</span> like this:</p>
+<div class="cell" data-execution_count="18">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#                   E(Z')</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> (b_xz <span class="op">*</span> <span class="fl">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="19">
+<pre><code>19.487497126823868</code></pre>
+</div>
+</div>
+<p>Here, we get an estimate of the total causal effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span> that’s clearly biased upwards.</p>
+<section id="direct-and-indirect-effects" class="level4">
+<h4 class="anchored" data-anchor-id="direct-and-indirect-effects">Direct and indirect effects</h4>
+<p>Now, I’ve been trying to make it clear that, for the wrong DAG, we’re talking about the total causal effect of setting <span class="math inline">\(do(X = 6)\)</span> on the expected value of <span class="math inline">\(Y\)</span>. This was because, according to the models, <span class="math inline">\(X\)</span> affects <span class="math inline">\(Y\)</span> both directly and indirectly, by changing the value of <span class="math inline">\(Z\)</span>. Hence, the total effect of setting <span class="math inline">\(do(X = 6)\)</span> can be broken down into a (natural) direct effect, and a (natural) indirect effect<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>. The natural direct effect refers to the expected value of the <span class="math inline">\(Y\)</span> variable when <span class="math inline">\(X\)</span> is set to some value, and the <span class="math inline">\(Z\)</span> variable is set to whatever value it would have had prior to setting <span class="math inline">\(X = x\)</span> <span class="citation" data-cites="pearlCausalInferenceStatistics2016">(<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">Pearl, Glymour, and Jewell 2016</a>)</span> <a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p>
+<p>We’ll use the value <span class="math inline">\(X = 0\)</span> as the reference point. In other words, when saying that the variable <span class="math inline">\(Z\)</span> holds values which <span class="math inline">\(Z\)</span> would have attained <em>prior to setting</em> <span class="math inline">\(X = 6\)</span>, we’re talking about the values <span class="math inline">\(Z\)</span> would have attained had <span class="math inline">\(X\)</span> been 0.</p>
+<p>How would we go about calculating the natural direct effect? The explanation is a bit long, and requires going into a lot of things not covered here (but see materials listed in the previous footnote). However, I’ll try giving a brief explanation. In our wrong DAG, the <span class="math inline">\(Z\)</span> variable serves as a link between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. Since the path <span class="math inline">\(X \textrightarrow Z \textrightarrow Y\)</span> is causal, these three variables form a chain, where <span class="math inline">\(Z\)</span> is a mediator of the effect of <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. In order to be able to identify the natural direct effect, there has to exist a set of measured variables, let’s call it <span class="math inline">\(W\)</span>, that satisfies two conditions. First, no variable in <span class="math inline">\(W\)</span> is allowed to be a descendant of <span class="math inline">\(X\)</span>; in other words, <span class="math inline">\(W\)</span> must not have an arrow going into it from <span class="math inline">\(X\)</span>, or from any variable that has an arrow out of <span class="math inline">\(X\)</span> going into it. Second, the variables in <span class="math inline">\(W\)</span> have to block all backdoor paths from the mediator <span class="math inline">\(Z\)</span> to <span class="math inline">\(Y\)</span>, once we’ve removed the arrows going from <span class="math inline">\(X\)</span> to <span class="math inline">\(Z\)</span> and from <span class="math inline">\(Z\)</span> to <span class="math inline">\(Y\)</span>. Since our DAG is really simple, the empty set (i.e.&nbsp;containing no variables), satisfies these two conditions; our set <span class="math inline">\(W\)</span> is empty. Therefore, we can get the natural direct effect as:</p>
+<p><span class="math display">\[
+    NDE = \int_z [\text{E}(Y | do(X = 6, Z = z)) -
+        \text{E}(Y | do(X = 0, Z = z))] \times p(Z = z | do(X = 0)).
+\]</span></p>
+<p>Let’s break this down by parts. First up is the expectation <span class="math inline">\(\text{E}(Y | do(X = 6, Z = z))\)</span>. Here, we apply the do-operator both to <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>. Can we get from the <span class="math inline">\(do(\cdot)\)</span> expression to a simple observation? First, let’s try turning <span class="math inline">\(do(Z = z)\)</span> into <span class="math inline">\(Z = z\)</span>. Given that we’re also intervening on <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> has to be independent from <span class="math inline">\(Y\)</span> in a DAG where all arrows entering <span class="math inline">\(X\)</span> and all arrows exiting <span class="math inline">\(Z\)</span> are removed (and possibly after conditioning on <span class="math inline">\(X\)</span>):</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-wrong-dag-interv-xz" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="188pt" height="116pt" viewbox="0.00 0.00 188.00 116.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-112 184,-112 184,4 -4,4"></polygon> <!-- Z --> <g id="node1" class="node">
+<title>
+Z
+</title>
+<ellipse fill="none" stroke="black" cx="90" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="90" y="-85.8" font-family="Times,serif" font-size="14.00">Z</text> </g> <!-- Y --> <g id="node3" class="node">
+<title>
+Y
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="153" y="-13.8" font-family="Times,serif" font-size="14.00">Y</text> </g> <!-- Z&#45;&gt;Y --> <g id="edge1" class="edge">
+<title>
+Z-&gt;Y
+</title>
+</g> <!-- X --> <g id="node2" class="node">
+<title>
+X
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="27" y="-13.8" font-family="Times,serif" font-size="14.00">X</text> </g> <!-- X&#45;&gt;Z --> <g id="edge2" class="edge">
+<title>
+X-&gt;Z
+</title>
+<path fill="none" stroke="black" d="M40.34,-33.82C48.86,-43.29 60.06,-55.73 69.67,-66.41"></path> <polygon fill="black" stroke="black" points="67.35,-69.06 76.64,-74.15 72.55,-64.38 67.35,-69.06"></polygon> </g> <!-- X&#45;&gt;Y --> <g id="edge3" class="edge">
+<title>
+X-&gt;Y
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 8: Wrong DAG with arrows leaving <span class="math inline">\(Z\)</span> and entering <span class="math inline">\(X\)</span> removed.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This really is the case, conditional on <span class="math inline">\(X\)</span>, <span class="math inline">\(Z\)</span> and <span class="math inline">\(Y\)</span> are independent in such a graph: <span class="math inline">\((Z \perp Y | X)_{G_{\bar{X}\underline{Z}}}\)</span>. Therefore, we can write <span class="math inline">\(\text{E}(Y | do(X = 6), do(Z = z)) = \text{E}(Y | do(X = 6), Z = z)\)</span>. Next, we have to get rid of <span class="math inline">\(do(X = 6)\)</span>. We know we can do that from earlier, when we were calculating the total effect of intervening on <span class="math inline">\(X\)</span> on <span class="math inline">\(Y\)</span>. Therefore, we know that <span class="math inline">\(\text{E}(Y | do(X = 6, Z = z)) = \text{E}(Y | X = 6, Z = z)\)</span>, and also that <span class="math inline">\(\text{E}(Y | do(X = 0, Z = z)) = \text{E}(Y | X = 0, Z = z)\)</span>.</p>
+<p>Next, we have <span class="math inline">\(p(Z = z | do(X = 0))\)</span>. In order to replace the do-operator with a simple observation, <span class="math inline">\(Z\)</span> and <span class="math inline">\(X\)</span> have to be independent in a graph where all arrows exiting <span class="math inline">\(X\)</span> have been removed. We have this graph in <a href="#fig-simple-confounding-wrong-dag-interv-mutil">Figure&nbsp;7</a>. This is also the case. Therefore, we can replace the do-operator with an observation. This means that our natural direct effect can be calculated as:</p>
+<p><span class="math display">\[
+    NDE = \int_z [\text{E}(Y | X = 6, Z = z) -
+        \text{E}(Y | X = 0, Z = z)] \times p(Z = z | X = 0).
+\]</span></p>
+<p>According to our model specification:</p>
+<p><span class="math display">\[\begin{align}
+    \text{E}(Y | X = x, Z = z) &amp;= \mu_{y_i} \\
+        &amp;= b_{XY} x_i + b_{ZY} z_i \\
+    p(Z = z | X = 0) &amp;= \text{normal}(Z = z | \mu_{z_i}, \sigma_Z) \\
+        &amp;= \text{normal}(Z = z | b_{XZ} x_i, \sigma_Z)
+\end{align}\]</span></p>
+<p>We can, again, code this using <code>QuadGK</code>, plugging in our posterior estimates of the parameter values:</p>
+<div class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    f_Z <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">0</span>, s_Z)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> ((b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">+</span> b_zy <span class="op">*</span> z) <span class="op">-</span> (b_xy <span class="op">*</span> <span class="fl">0</span> <span class="op">+</span> b_zy <span class="op">*</span> z)) <span class="op">*</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>        Distributions.<span class="fu">pdf</span>(f_Z, z)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>QuadGK.<span class="fu">quadgk</span>(integral,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>              <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="20">
+<pre><code>(12.044197846077513, 1.2915591943083213e-7)</code></pre>
+</div>
+</div>
+<p>Alternatively, for example, we could simulate data corresponding to the given definition of the natural direct effect:</p>
+<div class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># distribution of Z when X is set to 0</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>Z_0_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">0</span>, s_Z)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co"># random draws from the distribution of Z when X is set to 0</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>Z_0 <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Z_0_distr,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>                  <span class="fl">10_000</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="co">#= distributions corresponding to the combinations of X = {0, 6} and various</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="co">simulated Z values =#</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>Y_0_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(b_xy <span class="op">*</span> <span class="fl">0</span> <span class="op">.+</span> Z_0)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>Y_6_distr <span class="op">=</span> Distributions.<span class="fu">Normal</span>.(b_xy <span class="op">*</span> <span class="fl">6</span> <span class="op">.+</span> Z_0)</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a><span class="co"># draws 50 values from each distribution</span></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>Y_0 <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_0_distr,</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>                   <span class="fl">50</span>)</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>Y_6 <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>.(Y_6_distr,</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>                   <span class="fl">50</span>)</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a><span class="co"># get mean for each set of draws</span></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>Y_0 <span class="op">=</span> <span class="fu">map</span>(mean,</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>          Y_0)</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>Y_6 <span class="op">=</span> <span class="fu">map</span>(mean,</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>          Y_6)</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a><span class="co"># mean of the difference</span></span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>nde <span class="op">=</span> <span class="fu">mean</span>(Y_6 <span class="op">.-</span> Y_0)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<pre><code>12.044005487553987</code></pre>
+</div>
+</div>
+</section>
+<section id="natural-indirect-effect" class="level4">
+<h4 class="anchored" data-anchor-id="natural-indirect-effect">Natural indirect effect</h4>
+<p>The natural indirect effect refers to the expected value of <span class="math inline">\(Y\)</span> while <span class="math inline">\(X\)</span> is set to some value <span class="math inline">\(x\)</span>, and <span class="math inline">\(Z\)</span> takes the value it would have had if <span class="math inline">\(X\)</span> were set to some <span class="math inline">\(x'\)</span>. We’ll again use <span class="math inline">\(X = 0\)</span> as a reference point.</p>
+<p>In the case of our DAG, the natural indirect effect may be calculated as</p>
+<p><span class="math display">\[
+    NIE = \int_z \text{E}(Y | X = 0, Z = z)[p(Z = z | X = 6) -
+        p(Z = z | X = 0)]
+\]</span></p>
+<p>Let’s try computing this.</p>
+<div class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">integral</span>(z)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    f_Z_0 <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">0</span>, s_Z)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    f_Z_6 <span class="op">=</span> Distributions.<span class="fu">Normal</span>(b_xz <span class="op">*</span> <span class="fl">6</span>, s_Z)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (b_xy <span class="op">*</span> <span class="fl">0</span> <span class="op">+</span> b_zy <span class="op">*</span> z) <span class="op">*</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        (Distributions.<span class="fu">pdf</span>(f_Z_6, z) <span class="op">-</span> Distributions.<span class="fu">pdf</span>(f_Z_0, z))</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>nie <span class="op">=</span> QuadGK.<span class="fu">quadgk</span>(integral,</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>                    <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>                    <span class="cn">Inf</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="22">
+<pre><code>(7.44329928074637, 9.020959025846772e-8)</code></pre>
+</div>
+</div>
+<p>As I’ve mentioned earlier, the total causal effect can be <em>decomposed</em> into the natural direct effect and the natural indirect effect. Therefore, if our calculations are correct, we’d expect that the sum of our natural indirect and direct effects (approximately) corresponds to the total effect we’ve obtained earlier. This really is the case with our calculations:</p>
+<div class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>nde <span class="op">+</span> nie[<span class="fl">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="23">
+<pre><code>19.487304768300355</code></pre>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="a-less-scary-way-to-compute" class="level2">
+<h2 class="anchored" data-anchor-id="a-less-scary-way-to-compute">A less scary way to compute?</h2>
+<p>Now, we’ve seemingly managed to identify and calculate the effect an intervention on <span class="math inline">\(X\)</span> would have on <span class="math inline">\(Y\)</span> when assuming different causal relationships between variables. Until now, we’ve relied on integrals and simulations to calculate the effects (and have only dealt with point estimates). This wasn’t necessarily very complicated, but also wasn’t simple and straightforward.</p>
+<p>There’s an interesting text by <span class="citation" data-cites="lattimoreCausalInferenceBayes2019 lattimoreReplacingDocalculusBayes2021">Lattimore and Rohde (<a href="#ref-lattimoreCausalInferenceBayes2019" role="doc-biblioref">2019</a>; also an extended version <a href="#ref-lattimoreReplacingDocalculusBayes2021" role="doc-biblioref">Lattimore and Rohde 2021</a>)</span>, where they claim that we can get estimates of causal effects using the Bayesian machinery, without having to use do-calculus at all. The idea is that we simultaneously fit a pre-intervention and post-intervention model. Sounds esoteric, but is relatively simple in practice.</p>
+<section id="interventions-according-to-the-true-dag" class="level3">
+<h3 class="anchored" data-anchor-id="interventions-according-to-the-true-dag">Interventions according to the true DAG</h3>
+<p>Let’s return to the model which is in line with the true directed acyclic graph (DAG). We’ve already mentioned that interventions can be represented by removing all arrows going into the variable that’s being intervened upon. <span class="citation" data-cites="lattimoreCausalInferenceBayes2019">Lattimore and Rohde (<a href="#ref-lattimoreCausalInferenceBayes2019" role="doc-biblioref">2019</a>)</span> take this idea and model the pre-intervention and post-intervention states simultaneously. A key step is to connect all variables which are not being intervened upon with a common vector (or set) of parameters (which can also contain just a single parameter). I’ll label those vectors <span class="math inline">\(\theta\)</span>, and subscript them with the variable they’re referring to. For example, <span class="math inline">\(\theta_X\)</span> would be the vector of parameters connecting the pre-intervention variable <span class="math inline">\(X\)</span> with the post-intervention variable, which I’ll label <span class="math inline">\(X'\)</span>.</p>
+<p>Now, I was not entirely sure how to translate their examples to the case at hand. I assumed that my <span class="math inline">\(\theta\)</span>s should contain all parameters that define the pre- and post-intervention distributions. For example, <span class="math inline">\(\theta_Z\)</span> would contain <span class="math inline">\(\mu_Z\)</span> and <span class="math inline">\(\sigma_Z\)</span>. On the other hand, <span class="math inline">\(\theta_Y\)</span> should contain <span class="math inline">\(b_{XY}\)</span>, <span class="math inline">\(b_{XZ}\)</span> and <span class="math inline">\(\sigma_Y\)</span>, as those three parameters determine the location and scale of the <span class="math inline">\(Y\)</span> and <span class="math inline">\(Y'\)</span> distributions (remember that <span class="math inline">\(\mu_{y_i} = b_{XZ} x_i + b_{ZY} z_i\)</span>).</p>
+<p>So, keeping all that in mind, what we’re trying to model is shown in <a href="#fig-simple-confounding-bayes-intervention-true">Figure&nbsp;9</a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-bayes-intervention-true" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="386pt" height="188pt" viewbox="0.00 0.00 386.00 188.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 184)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-184 382,-184 382,4 -4,4"></polygon> <!-- theta_Z --> <g id="node1" class="node">
+<title>
+theta_Z
+</title>
+<ellipse fill="none" stroke="black" cx="179" cy="-162" rx="27" ry="18"></ellipse> <text text-anchor="start" x="171.22" y="-158.8" font-family="Times,serif" font-size="14.00">θ</text> <text text-anchor="start" x="178.22" y="-158.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">Z</text> </g> <!-- Z1 --> <g id="node2" class="node">
+<title>
+Z1
+</title>
+<ellipse fill="none" stroke="black" cx="133" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="start" x="125.22" y="-86.8" font-family="Times,serif" font-size="14.00">Z</text> <text text-anchor="start" x="133.78" y="-86.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- theta_Z&#45;&gt;Z1 --> <g id="edge1" class="edge">
+<title>
+theta_Z-&gt;Z1
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M168.56,-145.12C162.8,-136.34 155.52,-125.26 149.04,-115.42"></path> <polygon fill="black" stroke="black" points="151.81,-113.26 143.4,-106.82 145.96,-117.1 151.81,-113.26"></polygon> </g> <!-- Z2 --> <g id="node3" class="node">
+<title>
+Z2
+</title>
+<ellipse fill="none" stroke="black" cx="243" cy="-90" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="243" y="-85.8" font-family="Times,serif" font-size="14.00">Z’</text> </g> <!-- theta_Z&#45;&gt;Z2 --> <g id="edge2" class="edge">
+<title>
+theta_Z-&gt;Z2
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M192.57,-146.15C201.31,-136.6 212.83,-123.99 222.66,-113.25"></path> <polygon fill="black" stroke="black" points="225.28,-115.57 229.45,-105.82 220.12,-110.84 225.28,-115.57"></polygon> </g> <!-- Y1 --> <g id="node5" class="node">
+<title>
+Y1
+</title>
+<ellipse fill="none" stroke="black" cx="153" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="start" x="144.44" y="-14.8" font-family="Times,serif" font-size="14.00">Y</text> <text text-anchor="start" x="154.56" y="-14.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- Z1&#45;&gt;Y1 --> <g id="edge7" class="edge">
+<title>
+Z1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M137.84,-72.05C140.1,-64.14 142.85,-54.54 145.37,-45.69"></path> <polygon fill="black" stroke="black" points="148.82,-46.37 148.2,-35.79 142.09,-44.44 148.82,-46.37"></polygon> </g> <!-- X1 --> <g id="node7" class="node">
+<title>
+X1
+</title>
+<ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="start" x="18.44" y="-14.8" font-family="Times,serif" font-size="14.00">X</text> <text text-anchor="start" x="28.56" y="-14.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- Z1&#45;&gt;X1 --> <g id="edge6" class="edge">
+<title>
+Z1-&gt;X1
+</title>
+<path fill="none" stroke="black" d="M114.54,-76.81C97.84,-65.78 73.05,-49.41 54.11,-36.9"></path> <polygon fill="black" stroke="black" points="55.88,-33.88 45.61,-31.29 52.02,-39.72 55.88,-33.88"></polygon> </g> <!-- Y2 --> <g id="node6" class="node">
+<title>
+Y2
+</title>
+<ellipse fill="none" stroke="black" cx="351" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="351" y="-13.8" font-family="Times,serif" font-size="14.00">Y’</text> </g> <!-- Z2&#45;&gt;Y2 --> <g id="edge9" class="edge">
+<title>
+Z2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M261.81,-76.81C279,-65.67 304.62,-49.06 323.99,-36.5"></path> <polygon fill="black" stroke="black" points="325.92,-39.43 332.4,-31.05 322.11,-33.56 325.92,-39.43"></polygon> </g> <!-- X2 --> <g id="node8" class="node">
+<title>
+X2
+</title>
+<ellipse fill="none" stroke="black" cx="225" cy="-18" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="225" y="-13.8" font-family="Times,serif" font-size="14.00">X’</text> </g> <!-- Z2&#45;&gt;X2 --> <g id="edge10" class="edge">
+<title>
+Z2-&gt;X2
+</title>
+</g> <!-- theta_Y --> <g id="node4" class="node">
+<title>
+theta_Y
+</title>
+<ellipse fill="none" stroke="black" cx="274" cy="-162" rx="27" ry="18"></ellipse> <text text-anchor="start" x="265.44" y="-158.8" font-family="Times,serif" font-size="14.00">θ</text> <text text-anchor="start" x="272.44" y="-158.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">Y</text> </g> <!-- theta_Y&#45;&gt;Y1 --> <g id="edge3" class="edge">
+<title>
+theta_Y-&gt;Y1
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M255.16,-148.84C240.84,-138.98 221.24,-124.12 207,-108 189.99,-88.74 175.21,-63.41 165.44,-44.7"></path> <polygon fill="black" stroke="black" points="168.45,-42.91 160.8,-35.59 162.22,-46.09 168.45,-42.91"></polygon> </g> <!-- theta_Y&#45;&gt;Y2 --> <g id="edge4" class="edge">
+<title>
+theta_Y-&gt;Y2
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M282.83,-144.71C296.18,-120.1 321.59,-73.24 337.33,-44.21"></path> <polygon fill="black" stroke="black" points="340.58,-45.56 342.27,-35.1 334.43,-42.22 340.58,-45.56"></polygon> </g> <!-- X1&#45;&gt;Y1 --> <g id="edge5" class="edge">
+<title>
+X1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M54.07,-18C74.66,-18 95.25,-18 115.84,-18"></path> <polygon fill="black" stroke="black" points="115.95,-21.5 125.95,-18 115.95,-14.5 115.95,-21.5"></polygon> </g> <!-- X2&#45;&gt;Y2 --> <g id="edge8" class="edge">
+<title>
+X2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M252.07,-18C272.66,-18 293.25,-18 313.84,-18"></path> <polygon fill="black" stroke="black" points="313.95,-21.5 323.95,-18 313.95,-14.5 313.95,-21.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 9: Graph with pre-intervention model on the left and post-intervention model on the right.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Let’s fit this model in <code>Turing.jl</code>:</p>
+<div class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">simul_model</span>(X,</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>                                   Y,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                                   Z)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    mu_Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    s_Z <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_Z, s_Z)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    b_ZX <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>        X[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(Z[i] <span class="op">*</span> b_ZX,</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>                             s_X)</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a>    Z_prime <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_Z, s_Z)</span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>    X_prime <span class="op">=</span> <span class="fl">6</span></span>
+<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>    Y_prime_distr <span class="op">=</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XY <span class="op">+</span> Z_prime <span class="op">*</span> b_ZY,</span>
+<span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>                                  s_Y)</span>
+<span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-32"><a href="#cb35-32" aria-hidden="true" tabindex="-1"></a>    Y_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Y_prime_distr, <span class="fl">50</span>)</span>
+<span id="cb35-33"><a href="#cb35-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-34"><a href="#cb35-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Y_prime</span>
+<span id="cb35-35"><a href="#cb35-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb35-36"><a href="#cb35-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-37"><a href="#cb35-37" aria-hidden="true" tabindex="-1"></a>chains_simul <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">simul_model</span>(X,</span>
+<span id="cb35-38"><a href="#cb35-38" aria-hidden="true" tabindex="-1"></a>                                         Y,</span>
+<span id="cb35-39"><a href="#cb35-39" aria-hidden="true" tabindex="-1"></a>                                         Z),</span>
+<span id="cb35-40"><a href="#cb35-40" aria-hidden="true" tabindex="-1"></a>                             Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb35-41"><a href="#cb35-41" aria-hidden="true" tabindex="-1"></a>                                         <span class="fl">0.80</span>),</span>
+<span id="cb35-42"><a href="#cb35-42" aria-hidden="true" tabindex="-1"></a>                             Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb35-43"><a href="#cb35-43" aria-hidden="true" tabindex="-1"></a>                             <span class="fl">1000</span>,</span>
+<span id="cb35-44"><a href="#cb35-44" aria-hidden="true" tabindex="-1"></a>                             <span class="fl">4</span>)</span>
+<span id="cb35-45"><a href="#cb35-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-46"><a href="#cb35-46" aria-hidden="true" tabindex="-1"></a>Y_prime <span class="op">=</span> Turing.<span class="fu">generated_quantities</span>(<span class="fu">simul_model</span>(X,</span>
+<span id="cb35-47"><a href="#cb35-47" aria-hidden="true" tabindex="-1"></a>                                                  Y,</span>
+<span id="cb35-48"><a href="#cb35-48" aria-hidden="true" tabindex="-1"></a>                                                  Z),</span>
+<span id="cb35-49"><a href="#cb35-49" aria-hidden="true" tabindex="-1"></a>                                      chains_simul)</span>
+<span id="cb35-50"><a href="#cb35-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-51"><a href="#cb35-51" aria-hidden="true" tabindex="-1"></a>Y_prime_exp <span class="op">=</span> <span class="fu">map</span>(mean,</span>
+<span id="cb35-52"><a href="#cb35-52" aria-hidden="true" tabindex="-1"></a>                  Y_prime) <span class="op">|&gt;</span></span>
+<span id="cb35-53"><a href="#cb35-53" aria-hidden="true" tabindex="-1"></a>    vec</span>
+<span id="cb35-54"><a href="#cb35-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-55"><a href="#cb35-55" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_prime_exp) <span class="op">|&gt;</span></span>
+<span id="cb35-56"><a href="#cb35-56" aria-hidden="true" tabindex="-1"></a>    display</span>
+<span id="cb35-57"><a href="#cb35-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-58"><a href="#cb35-58" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(Y_prime_exp,</span>
+<span id="cb35-59"><a href="#cb35-59" aria-hidden="true" tabindex="-1"></a>         [<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">|&gt;</span></span>
+<span id="cb35-60"><a href="#cb35-60" aria-hidden="true" tabindex="-1"></a>    display</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>16.17476542370679</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>2-element Vector{Float64}:
+ 10.980630870363855
+ 21.461084381487193</code></pre>
+</div>
+</div>
+<p>First, I’ve coded the model using <code>Turing.jl</code>. After sampling from the joint model, I’ve asked <code>Turing</code> to generate quantities — i.e.&nbsp;<code>Y_prime</code> — from the model. For each iteration of the MCMC, <code>Y_prime</code> holds 50 samples from the distribution of <span class="math inline">\(Y'\)</span>. After extracting the <code>Y_prime</code> values, I’ve calculated the mean of each sample of size 50, and then the mean of those means, as well as the 0.1 and 0.9 quantiles. What we get is suspiciously similar to the expected value we’ve calculated in <a href="#sec-interventions-acccording-to-the-true-dag">Section&nbsp;1.3.1</a>. This seems nice. However, as a sanity check, let’s also try calculating the values implied by the wrong DAG.</p>
+</section>
+<section id="interventions-according-to-the-wrong-dag-1" class="level3">
+<h3 class="anchored" data-anchor-id="interventions-according-to-the-wrong-dag-1">Interventions according to the wrong DAG</h3>
+<p>Let’s repeat the process from the previous section, but this time relying on the DAG we know to be wrong. We’ll try getting both an estimate of the total effect and the natural direct and indirect effects. The model we’re working with is:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-simple-confounding-bayes-intervention-wrong-total" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p>
+<svg width="424pt" height="204pt" viewbox="0.00 0.00 424.00 204.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 200)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-200 420,-200 420,4 -4,4"></polygon> <g id="clust4" class="cluster">
+<title>
+cluster_pre
+</title>
+<polygon fill="none" stroke="transparent" points="8,-8 8,-132 204,-132 204,-8 8,-8"></polygon> </g> <g id="clust6" class="cluster">
+<title>
+cluster_post
+</title>
+<polygon fill="none" stroke="transparent" points="212,-8 212,-132 408,-132 408,-8 212,-8"></polygon> </g> <!-- theta_Z --> <g id="node1" class="node">
+<title>
+theta_Z
+</title>
+<ellipse fill="none" stroke="black" cx="193" cy="-178" rx="27" ry="18"></ellipse> <text text-anchor="start" x="185.22" y="-174.8" font-family="Times,serif" font-size="14.00">θ</text> <text text-anchor="start" x="192.22" y="-174.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">Z</text> </g> <!-- Z1 --> <g id="node2" class="node">
+<title>
+Z1
+</title>
+<ellipse fill="none" stroke="black" cx="138" cy="-106" rx="27" ry="18"></ellipse> <text text-anchor="start" x="130.22" y="-102.8" font-family="Times,serif" font-size="14.00">Z</text> <text text-anchor="start" x="138.78" y="-102.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- theta_Z&#45;&gt;Z1 --> <g id="edge1" class="edge">
+<title>
+theta_Z-&gt;Z1
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M181.07,-161.81C173.79,-152.55 164.34,-140.52 156.15,-130.09"></path> <polygon fill="black" stroke="black" points="158.84,-127.86 149.91,-122.16 153.34,-132.18 158.84,-127.86"></polygon> </g> <!-- Z2 --> <g id="node3" class="node">
+<title>
+Z2
+</title>
+<ellipse fill="none" stroke="black" cx="248" cy="-106" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="248" y="-101.8" font-family="Times,serif" font-size="14.00">Z’</text> </g> <!-- theta_Z&#45;&gt;Z2 --> <g id="edge2" class="edge">
+<title>
+theta_Z-&gt;Z2
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M204.93,-161.81C212.21,-152.55 221.66,-140.52 229.85,-130.09"></path> <polygon fill="black" stroke="black" points="232.66,-132.18 236.09,-122.16 227.16,-127.86 232.66,-132.18"></polygon> </g> <!-- Y1 --> <g id="node5" class="node">
+<title>
+Y1
+</title>
+<ellipse fill="none" stroke="black" cx="169" cy="-34" rx="27" ry="18"></ellipse> <text text-anchor="start" x="160.44" y="-30.8" font-family="Times,serif" font-size="14.00">Y</text> <text text-anchor="start" x="170.56" y="-30.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- Z1&#45;&gt;Y1 --> <g id="edge7" class="edge">
+<title>
+Z1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M145.35,-88.41C149.01,-80.13 153.53,-69.92 157.64,-60.66"></path> <polygon fill="black" stroke="black" points="160.86,-62.03 161.71,-51.47 154.46,-59.2 160.86,-62.03"></polygon> </g> <!-- Y2 --> <g id="node6" class="node">
+<title>
+Y2
+</title>
+<ellipse fill="none" stroke="black" cx="373" cy="-34" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="373" y="-29.8" font-family="Times,serif" font-size="14.00">Y’</text> </g> <!-- Z2&#45;&gt;Y2 --> <g id="edge8" class="edge">
+<title>
+Z2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M268.08,-93.75C288.68,-82.22 320.9,-64.18 344.21,-51.12"></path> <polygon fill="black" stroke="black" points="345.95,-54.16 352.97,-46.22 342.53,-48.05 345.95,-54.16"></polygon> </g> <!-- theta_Y --> <g id="node4" class="node">
+<title>
+theta_Y
+</title>
+<ellipse fill="none" stroke="black" cx="301" cy="-178" rx="27" ry="18"></ellipse> <text text-anchor="start" x="292.44" y="-174.8" font-family="Times,serif" font-size="14.00">θ</text> <text text-anchor="start" x="299.44" y="-174.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">Y</text> </g> <!-- theta_Y&#45;&gt;Y1 --> <g id="edge3" class="edge">
+<title>
+theta_Y-&gt;Y1
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M276.23,-170.49C255.52,-163.89 226.49,-151.79 208,-132 189.77,-112.48 179.61,-83.36 174.27,-62.11"></path> <polygon fill="black" stroke="black" points="177.62,-61.06 171.96,-52.11 170.8,-62.64 177.62,-61.06"></polygon> </g> <!-- theta_Y&#45;&gt;Y2 --> <g id="edge4" class="edge">
+<title>
+theta_Y-&gt;Y2
+</title>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M309.26,-160.71C321.67,-136.23 345.24,-89.74 359.98,-60.67"></path> <polygon fill="black" stroke="black" points="363.21,-62.04 364.62,-51.54 356.97,-58.87 363.21,-62.04"></polygon> </g> <!-- X1 --> <g id="node7" class="node">
+<title>
+X1
+</title>
+<ellipse fill="none" stroke="black" cx="43" cy="-34" rx="27" ry="18"></ellipse> <text text-anchor="start" x="34.44" y="-30.8" font-family="Times,serif" font-size="14.00">X</text> <text text-anchor="start" x="44.56" y="-30.8" font-family="Times,serif" baseline-shift="sub" font-size="14.00">n</text> </g> <!-- X1&#45;&gt;Z1 --> <g id="edge6" class="edge">
+<title>
+X1-&gt;Z1
+</title>
+<path fill="none" stroke="black" d="M60.64,-47.99C75.2,-58.73 96.07,-74.11 112.47,-86.19"></path> <polygon fill="black" stroke="black" points="110.45,-89.05 120.58,-92.16 114.6,-83.41 110.45,-89.05"></polygon> </g> <!-- X1&#45;&gt;Y1 --> <g id="edge5" class="edge">
+<title>
+X1-&gt;Y1
+</title>
+<path fill="none" stroke="black" d="M70.07,-34C90.66,-34 111.25,-34 131.84,-34"></path> <polygon fill="black" stroke="black" points="131.95,-37.5 141.95,-34 131.95,-30.5 131.95,-37.5"></polygon> </g> <!-- X2 --> <g id="node8" class="node">
+<title>
+X2
+</title>
+<ellipse fill="none" stroke="black" cx="247" cy="-34" rx="27" ry="18"></ellipse> <text text-anchor="middle" x="247" y="-29.8" font-family="Times,serif" font-size="14.00">X’</text> </g> <!-- X2&#45;&gt;Z2 --> <g id="edge10" class="edge">
+<title>
+X2-&gt;Z2
+</title>
+<path fill="none" stroke="black" d="M247.24,-52.1C247.35,-59.79 247.49,-69.05 247.61,-77.67"></path> <polygon fill="black" stroke="black" points="244.11,-77.75 247.75,-87.7 251.11,-77.65 244.11,-77.75"></polygon> </g> <!-- X2&#45;&gt;Y2 --> <g id="edge9" class="edge">
+<title>
+X2-&gt;Y2
+</title>
+<path fill="none" stroke="black" d="M274.07,-34C294.66,-34 315.25,-34 335.84,-34"></path> <polygon fill="black" stroke="black" points="335.95,-37.5 345.95,-34 335.95,-30.5 335.95,-37.5"></polygon> </g> </g>
+</svg>
+</p>
+<p></p><figcaption aria-hidden="true" class="figure-caption">Figure 10: Graph with pre-intervention model on the left and post-intervention model on the right.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">simul_model_total</span>(X,</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>                                         Y,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                                         Z)</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    mu_X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_X, s_X)</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>        Z[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XZ,</span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>                             s_Z)</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>    X_prime <span class="op">=</span> <span class="fl">6</span></span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>    Z_prime <span class="op">~</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XZ, s_Z)</span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a>    Y_prime_distr <span class="op">=</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XY <span class="op">+</span> Z_prime <span class="op">*</span> b_ZY,</span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a>                                  s_Y)</span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a>    Y_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Y_prime_distr, <span class="fl">50</span>)</span>
+<span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Y_prime</span>
+<span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb38-36"><a href="#cb38-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-37"><a href="#cb38-37" aria-hidden="true" tabindex="-1"></a>chains_simul_total <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">simul_model_total</span>(X,</span>
+<span id="cb38-38"><a href="#cb38-38" aria-hidden="true" tabindex="-1"></a>                                                     Y,</span>
+<span id="cb38-39"><a href="#cb38-39" aria-hidden="true" tabindex="-1"></a>                                                     Z),</span>
+<span id="cb38-40"><a href="#cb38-40" aria-hidden="true" tabindex="-1"></a>                                   Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb38-41"><a href="#cb38-41" aria-hidden="true" tabindex="-1"></a>                                               <span class="fl">0.80</span>),</span>
+<span id="cb38-42"><a href="#cb38-42" aria-hidden="true" tabindex="-1"></a>                                   Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb38-43"><a href="#cb38-43" aria-hidden="true" tabindex="-1"></a>                                   <span class="fl">1000</span>,</span>
+<span id="cb38-44"><a href="#cb38-44" aria-hidden="true" tabindex="-1"></a>                                   <span class="fl">4</span>)</span>
+<span id="cb38-45"><a href="#cb38-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-46"><a href="#cb38-46" aria-hidden="true" tabindex="-1"></a>Y_prime <span class="op">=</span> Turing.<span class="fu">generated_quantities</span>(<span class="fu">simul_model_total</span>(X,</span>
+<span id="cb38-47"><a href="#cb38-47" aria-hidden="true" tabindex="-1"></a>                                                        Y,</span>
+<span id="cb38-48"><a href="#cb38-48" aria-hidden="true" tabindex="-1"></a>                                                        Z),</span>
+<span id="cb38-49"><a href="#cb38-49" aria-hidden="true" tabindex="-1"></a>                                      chains_simul_total)</span>
+<span id="cb38-50"><a href="#cb38-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-51"><a href="#cb38-51" aria-hidden="true" tabindex="-1"></a>Y_prime_exp <span class="op">=</span> <span class="fu">map</span>(mean,</span>
+<span id="cb38-52"><a href="#cb38-52" aria-hidden="true" tabindex="-1"></a>                  Y_prime) <span class="op">|&gt;</span></span>
+<span id="cb38-53"><a href="#cb38-53" aria-hidden="true" tabindex="-1"></a>    vec</span>
+<span id="cb38-54"><a href="#cb38-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-55"><a href="#cb38-55" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_prime_exp) <span class="op">|&gt;</span></span>
+<span id="cb38-56"><a href="#cb38-56" aria-hidden="true" tabindex="-1"></a>    display</span>
+<span id="cb38-57"><a href="#cb38-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-58"><a href="#cb38-58" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(Y_prime_exp,</span>
+<span id="cb38-59"><a href="#cb38-59" aria-hidden="true" tabindex="-1"></a>         [<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">|&gt;</span></span>
+<span id="cb38-60"><a href="#cb38-60" aria-hidden="true" tabindex="-1"></a>    display</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>19.50019352438375</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>2-element Vector{Float64}:
+ 17.819089191887056
+ 21.160924679333093</code></pre>
+</div>
+</div>
+<p>Again, this aligns well with our earlier estimates of the total causal effect. Now, onto the natural direct effect. We’ve previously used <span class="math inline">\(X = 0\)</span> as a baseline, and have said that we’re interested in the change in the expected value of <span class="math inline">\(Y\)</span> when we change <span class="math inline">\(X\)</span> to 6, while holding <span class="math inline">\(Z\)</span> at the values they would have attained had <span class="math inline">\(X\)</span> been 0. <span class="citation" data-cites="pearlCausalInferenceStatistics2016">Pearl, Glymour, and Jewell (<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">2016</a>)</span> tells us that, in certain cases, we can represent this essentially counterfactual claim with an expression employing do-operators both on the <span class="math inline">\(X\)</span> variable and the mediator <span class="math inline">\(Z\)</span>. Therefore, I get the feeling that <span class="citation" data-cites="lattimoreCausalInferenceBayes2019">Lattimore and Rohde (<a href="#ref-lattimoreCausalInferenceBayes2019" role="doc-biblioref">2019</a>)</span> would require us to intervene both on <span class="math inline">\(X\)</span> and <span class="math inline">\(Z\)</span>, thereby removing <span class="math inline">\(\theta_Z\)</span>. However, since we’re not fixing the <em>value</em> of <span class="math inline">\(Z\)</span>, but its location and scale parameters, I’ll code the models so that the the vector <span class="math inline">\(\theta_Z\)</span> is still present:</p>
+<div class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">simul_model_nde</span>(X,</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>                                       Y,</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>                                       Z)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    mu_X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_X, s_X)</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>        Z[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XZ,</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>                             s_Z)</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>    X_prime <span class="op">=</span> <span class="fl">6</span></span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>    Z_prime <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">0</span> <span class="op">*</span> b_XZ, s_Z)</span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>    Y_prime_distr <span class="op">=</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XY <span class="op">+</span> Z_prime <span class="op">*</span> b_ZY,</span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>                                  s_Y)</span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>    Y_prime <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Y_prime_distr, <span class="fl">50</span>)</span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Y_prime</span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>chains_simul_nde <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">simul_model_nde</span>(X,</span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>                                                 Y,</span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>                                                 Z),</span>
+<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a>                                 Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb41-41"><a href="#cb41-41" aria-hidden="true" tabindex="-1"></a>                                             <span class="fl">0.80</span>),</span>
+<span id="cb41-42"><a href="#cb41-42" aria-hidden="true" tabindex="-1"></a>                                 Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a>                                 <span class="fl">1000</span>,</span>
+<span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>                                 <span class="fl">4</span>)</span>
+<span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>Y_prime <span class="op">=</span> Turing.<span class="fu">generated_quantities</span>(<span class="fu">simul_model_nde</span>(X,</span>
+<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>                                                      Y,</span>
+<span id="cb41-48"><a href="#cb41-48" aria-hidden="true" tabindex="-1"></a>                                                      Z),</span>
+<span id="cb41-49"><a href="#cb41-49" aria-hidden="true" tabindex="-1"></a>                                      chains_simul_nde)</span>
+<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>Y_prime_exp <span class="op">=</span> <span class="fu">map</span>(mean,</span>
+<span id="cb41-52"><a href="#cb41-52" aria-hidden="true" tabindex="-1"></a>                  Y_prime) <span class="op">|&gt;</span></span>
+<span id="cb41-53"><a href="#cb41-53" aria-hidden="true" tabindex="-1"></a>    vec</span>
+<span id="cb41-54"><a href="#cb41-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-55"><a href="#cb41-55" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_prime_exp) <span class="op">|&gt;</span></span>
+<span id="cb41-56"><a href="#cb41-56" aria-hidden="true" tabindex="-1"></a>    display</span>
+<span id="cb41-57"><a href="#cb41-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-58"><a href="#cb41-58" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(Y_prime_exp,</span>
+<span id="cb41-59"><a href="#cb41-59" aria-hidden="true" tabindex="-1"></a>         [<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">|&gt;</span></span>
+<span id="cb41-60"><a href="#cb41-60" aria-hidden="true" tabindex="-1"></a>    display</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>12.049945897829636</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>2-element Vector{Float64}:
+ 10.28921422854419
+ 13.780604254937991</code></pre>
+</div>
+</div>
+<p>This also aligns nicely with the values we’ve calculated earlier. Finally, let’s try the natural indirect effect. Here, <span class="math inline">\(X\)</span> is held at the baseline value 0, and we’re interested in the change in the expected value of <span class="math inline">\(Y\)</span> when the <span class="math inline">\(Z\)</span> variable changes from values it would have had under <span class="math inline">\(X = 0\)</span> to values it would have under <span class="math inline">\(X = 6\)</span>. We’ll, therefore, have to calculate two values of <span class="math inline">\(Z'\)</span>, one with <span class="math inline">\(X = 6\)</span> and the other with <span class="math inline">\(X = 0\)</span>, look at the distributions of <span class="math inline">\(Y'\)</span> they imply (together with <span class="math inline">\(X\)</span>), and subtract the distribution’s expectations (I’ll calculate the differences between the values within the <code>Turing</code> model and the expectations of those differences outside of the model). Let’s try coding this into the model:</p>
+<div class="cell" data-execution_count="26">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>Turing.<span class="pp">@model</span> <span class="kw">function</span> <span class="fu">simul_model_nie</span>(X,</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>                                       Y,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>                                       Z)</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    mu_X <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>    X <span class="op">~</span> Turing.<span class="fu">Normal</span>(mu_X, s_X)</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>    s_Y <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    s_X <span class="op">~</span> Turing.<span class="fu">Exponential</span>(<span class="fl">1</span>)</span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>    b_XZ <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>    b_XY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>    b_ZY <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">2</span>, <span class="fl">1</span>)</span>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="fu">eachindex</span>(X)</span>
+<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a>        Z[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XZ,</span>
+<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a>                             s_Z)</span>
+<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a>        Y[i] <span class="op">~</span> Turing.<span class="fu">Normal</span>(X[i] <span class="op">*</span> b_XY <span class="op">+</span> Z[i] <span class="op">*</span> b_ZY,</span>
+<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a>                             s_Y)</span>
+<span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb44-24"><a href="#cb44-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-25"><a href="#cb44-25" aria-hidden="true" tabindex="-1"></a>    X_prime <span class="op">=</span> <span class="fl">0</span></span>
+<span id="cb44-26"><a href="#cb44-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-27"><a href="#cb44-27" aria-hidden="true" tabindex="-1"></a>    Z_prime_0 <span class="op">~</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XZ, s_Z)</span>
+<span id="cb44-28"><a href="#cb44-28" aria-hidden="true" tabindex="-1"></a>    Z_prime_6 <span class="op">~</span> Turing.<span class="fu">Normal</span>(<span class="fl">6</span> <span class="op">*</span> b_XZ, s_Z)</span>
+<span id="cb44-29"><a href="#cb44-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-30"><a href="#cb44-30" aria-hidden="true" tabindex="-1"></a>    Y_prime_distr_0 <span class="op">=</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XY <span class="op">+</span> Z_prime_0 <span class="op">*</span> b_ZY,</span>
+<span id="cb44-31"><a href="#cb44-31" aria-hidden="true" tabindex="-1"></a>                                    s_Y)</span>
+<span id="cb44-32"><a href="#cb44-32" aria-hidden="true" tabindex="-1"></a>    Y_prime_distr_6 <span class="op">=</span> Turing.<span class="fu">Normal</span>(X_prime <span class="op">*</span> b_XY <span class="op">+</span> Z_prime_6 <span class="op">*</span> b_ZY,</span>
+<span id="cb44-33"><a href="#cb44-33" aria-hidden="true" tabindex="-1"></a>                                    s_Y)</span>
+<span id="cb44-34"><a href="#cb44-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-35"><a href="#cb44-35" aria-hidden="true" tabindex="-1"></a>    Y_prime_0 <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Y_prime_distr_0, <span class="fl">50</span>)</span>
+<span id="cb44-36"><a href="#cb44-36" aria-hidden="true" tabindex="-1"></a>    Y_prime_6 <span class="op">=</span> <span class="bu">Random</span>.<span class="fu">rand</span>(Y_prime_distr_6, <span class="fl">50</span>)</span>
+<span id="cb44-37"><a href="#cb44-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-38"><a href="#cb44-38" aria-hidden="true" tabindex="-1"></a>    Y_diff <span class="op">=</span> Y_prime_6 <span class="op">.-</span> Y_prime_0</span>
+<span id="cb44-39"><a href="#cb44-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-40"><a href="#cb44-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Y_diff</span>
+<span id="cb44-41"><a href="#cb44-41" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb44-42"><a href="#cb44-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-43"><a href="#cb44-43" aria-hidden="true" tabindex="-1"></a>chains_simul_nie <span class="op">=</span> Turing.<span class="fu">sample</span>(<span class="fu">simul_model_nie</span>(X,</span>
+<span id="cb44-44"><a href="#cb44-44" aria-hidden="true" tabindex="-1"></a>                                                Y,</span>
+<span id="cb44-45"><a href="#cb44-45" aria-hidden="true" tabindex="-1"></a>                                                Z),</span>
+<span id="cb44-46"><a href="#cb44-46" aria-hidden="true" tabindex="-1"></a>                                 Turing.<span class="fu">NUTS</span>(<span class="fl">1000</span>,</span>
+<span id="cb44-47"><a href="#cb44-47" aria-hidden="true" tabindex="-1"></a>                                             <span class="fl">0.80</span>),</span>
+<span id="cb44-48"><a href="#cb44-48" aria-hidden="true" tabindex="-1"></a>                                 Turing.<span class="fu">MCMCThreads</span>(),</span>
+<span id="cb44-49"><a href="#cb44-49" aria-hidden="true" tabindex="-1"></a>                                 <span class="fl">1000</span>,</span>
+<span id="cb44-50"><a href="#cb44-50" aria-hidden="true" tabindex="-1"></a>                                 <span class="fl">4</span>)</span>
+<span id="cb44-51"><a href="#cb44-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-52"><a href="#cb44-52" aria-hidden="true" tabindex="-1"></a>Y_diff <span class="op">=</span> Turing.<span class="fu">generated_quantities</span>(<span class="fu">simul_model_nie</span>(X,</span>
+<span id="cb44-53"><a href="#cb44-53" aria-hidden="true" tabindex="-1"></a>                                                     Y,</span>
+<span id="cb44-54"><a href="#cb44-54" aria-hidden="true" tabindex="-1"></a>                                                     Z),</span>
+<span id="cb44-55"><a href="#cb44-55" aria-hidden="true" tabindex="-1"></a>                                     chains_simul_nie)</span>
+<span id="cb44-56"><a href="#cb44-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-57"><a href="#cb44-57" aria-hidden="true" tabindex="-1"></a>Y_diff_exp <span class="op">=</span> <span class="fu">map</span>(mean,</span>
+<span id="cb44-58"><a href="#cb44-58" aria-hidden="true" tabindex="-1"></a>                 Y_diff) <span class="op">|&gt;</span></span>
+<span id="cb44-59"><a href="#cb44-59" aria-hidden="true" tabindex="-1"></a>    vec</span>
+<span id="cb44-60"><a href="#cb44-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-61"><a href="#cb44-61" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Y_diff_exp) <span class="op">|&gt;</span></span>
+<span id="cb44-62"><a href="#cb44-62" aria-hidden="true" tabindex="-1"></a>    display</span>
+<span id="cb44-63"><a href="#cb44-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-64"><a href="#cb44-64" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(Y_diff_exp,</span>
+<span id="cb44-65"><a href="#cb44-65" aria-hidden="true" tabindex="-1"></a>         [<span class="fl">0.1</span>, <span class="fl">0.9</span>]) <span class="op">|&gt;</span></span>
+<span id="cb44-66"><a href="#cb44-66" aria-hidden="true" tabindex="-1"></a>    display</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>7.443764025457752</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>2-element Vector{Float64}:
+ 5.031206993410525
+ 9.876374170377023</code></pre>
+</div>
+</div>
+<p>We again get a similar results, which is great!</p>
+</section>
+</section>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>This long ride through these two simple DAGs was a way for me to piece together a lot of the things I’ve read about in the past few months (or years), while also using it as a chance to practice Julia. I think writing this has helped me to get a clearer understanding of causal DAGs, Bayesian networks/models, do-calculus and mediation, and I hope you’ve found parts of it useful, too.</p>
+<p>What brings me the most joy is that I’ve seemingly managed to tackle my way through various concepts about which I’ve had some pretty vague ideas up until now. Some things clicked. It also makes me happy that the various approaches to estimation converged (to a correct results, I hope).</p>
+<p>Finally, my takeaway from this is that (generative) Bayesian models are cool. That we can correctly “predict” (well, retrodict) results based on a DAG that’s incorrect is cool. That we cannot predict the effects of interventions based on a DAG that’s incorrect is less cool, but it’s good to know (and see in simulated data).</p>
+<p>Regarding the <span class="citation" data-cites="lattimoreCausalInferenceBayes2019">Lattimore and Rohde (<a href="#ref-lattimoreCausalInferenceBayes2019" role="doc-biblioref">2019</a>)</span> method: this is a really cool find and I’d love to try it out in a more complex setting. I <em>did</em> fit (basically) the same model three times; upon reflection, could’ve probably done it in a single <code>generated_quantities</code> call, and just ask the function to return some collection of the various results. That’s for another time.</p>
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-lattimoreCausalInferenceBayes2019" class="csl-entry" role="doc-biblioentry">
+Lattimore, Finnian, and David Rohde. 2019. <span>“Causal Inference with <span>Bayes</span> Rule.”</span> <a href="http://arxiv.org/abs/1910.01510">http://arxiv.org/abs/1910.01510</a>.
+</div>
+<div id="ref-lattimoreReplacingDocalculusBayes2021" class="csl-entry" role="doc-biblioentry">
+———. 2021. <span>“Replacing the Do-Calculus with <span>Bayes</span> Rule.”</span> <a href="http://arxiv.org/abs/1906.07125">http://arxiv.org/abs/1906.07125</a>.
+</div>
+<div id="ref-pearlCausalCalculusStatistical1996" class="csl-entry" role="doc-biblioentry">
+Pearl, Judea. 1996. <span>“A <span>Causal Calculus</span> for <span>Statistical Research</span>.”</span> In <em>Learning from <span>Data</span></em>, edited by Doug Fisher and Hans-J. Lenz, 112:23–33. Lecture <span>Notes</span> in <span>Statistics</span>. <span>New York, NY</span>: <span>Springer New York</span>. <a href="https://doi.org/10.1007/978-1-4612-2404-4_3">https://doi.org/10.1007/978-1-4612-2404-4_3</a>.
+</div>
+<div id="ref-pearlIntroductionCausalInference2010" class="csl-entry" role="doc-biblioentry">
+———. 2010. <span>“An <span>Introduction</span> to <span>Causal Inference</span>.”</span> <em>The International Journal of Biostatistics</em> 6 (2). <a href="https://doi.org/10.2202/1557-4679.1203">https://doi.org/10.2202/1557-4679.1203</a>.
+</div>
+<div id="ref-pearlInterpretationIdentificationCausal2014" class="csl-entry" role="doc-biblioentry">
+———. 2014. <span>“Interpretation and <span>Identification</span> of <span>Causal Mediation</span>.”</span> <em>Psychological Methods</em> 19 (4): 459–81. <a href="https://doi.org/10.1037/a0036434">https://doi.org/10.1037/a0036434</a>.
+</div>
+<div id="ref-pearlMediationFormulaGuide" class="csl-entry" role="doc-biblioentry">
+———. n.d. <span>“The <span>Mediation Formula</span>: <span>A Guide</span> to the <span>Assessment</span> of <span>Causal Pathways</span> in <span>Nonlinear Models</span>,”</span> 39.
+</div>
+<div id="ref-pearlCausalInferenceStatistics2016" class="csl-entry" role="doc-biblioentry">
+Pearl, Judea, Madelyn Glymour, and Nicholas P. Jewell. 2016. <em>Causal <span>Inference</span> in <span>Statistics</span>: <span>A Primer</span></em>. <span>John Wiley &amp; Sons</span>.
+</div>
+</div></section><section class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1" role="doc-endnote"><p>I’m putting unknown values (e.g.&nbsp;<span class="math inline">\(\mu_X\)</span>) instead of fixed values (e.g. 1) because the DAG, by itself, does not imply any specific form of the relationship between the variables. The variables don’t have to be normally distributed, either; I’m assuming a normal distribution for simplicity.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>The notation in this text is a bit different than the <span class="math inline">\(do(\cdot)\)</span> notation I’m using here. From my reading, Pearl started to use the <span class="math inline">\(do(\cdot)\)</span> operator in his later work. In the text referenced here, <span class="math inline">\(p(Y | \check{X})\)</span> is equal to <span class="math inline">\(p(Y | do(X = x))\)</span>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>Hello, counterfactuals!<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>I won’t go into the nuances of why the word “natural” is doing a fair amount of work here. See <span class="citation" data-cites="pearlIntroductionCausalInference2010">Pearl (<a href="#ref-pearlIntroductionCausalInference2010" role="doc-biblioref">2010</a>)</span>, <span class="citation" data-cites="pearlInterpretationIdentificationCausal2014">Pearl (<a href="#ref-pearlInterpretationIdentificationCausal2014" role="doc-biblioref">2014</a>)</span> or <span class="citation" data-cites="pearlMediationFormulaGuide">Pearl (<a href="#ref-pearlMediationFormulaGuide" role="doc-biblioref">n.d.</a>)</span> for more information.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5" role="doc-endnote"><p><span class="citation" data-cites="pearlCausalInferenceStatistics2016">Pearl, Glymour, and Jewell (<a href="#ref-pearlCausalInferenceStatistics2016" role="doc-biblioref">2016</a>)</span> actually define the natural direct effect as the expected increase in <span class="math inline">\(Y\)</span> when <span class="math inline">\(X\)</span> changes from some starting value <span class="math inline">\(x_0\)</span> to some value <span class="math inline">\(x\)</span>. In our case, we can imagine that <span class="math inline">\(x_0 = 0\)</span>. That will make our comparison setup equal to the one for the total effect.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
