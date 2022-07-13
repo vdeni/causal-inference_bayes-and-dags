@@ -6,13 +6,13 @@ This is my attempt of pieceing together various readings on topics of causal inf
 
 ```
 .
+├── docs
+│   ├── exploring-causality.html
+│   ├── exploring-causality.qmd
+│   └── references.bib
 ├── helpers
-│   ├── plots.jl
-│   └── text-formatting.jl
+│   ├── plots.jl
+│   └── text-formatting.jl
 ├── Project.toml
-├── README.md
-└── reports
-    ├── exploring-causality.html
-    ├── exploring-causality.qmd
-    └── references.bib
+└── README.md
 ```

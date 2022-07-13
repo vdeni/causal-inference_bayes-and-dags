@@ -23,6 +23,6 @@ docs/site/
 # environment.
 Manifest.toml
 
-reports/exploring-causality_files/**/*
-reports/*.ipynb
-reports/.jupyter_cache/
+docs/exploring-causality_files/**/*
+docs/*.ipynb
+docs/.jupyter_cache/
