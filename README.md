@@ -1,4 +1,4 @@
-# causal-inference_bayes-and-dags
+# Exploring causal inference, Bayesian models and DAGs
 
 This is my attempt of pieceing together various readings on topics of causal inference and Bayesian modeling. At times, it's vague and probably hand-wavy. However, it helped me contextualize a lot of the thing I've been reading about, and I hope someone else will find it useful, too.
 
