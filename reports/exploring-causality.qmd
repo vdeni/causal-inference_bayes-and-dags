@@ -70,10 +70,10 @@ $Z$ into $Y$. Since this path starts with an arrow pointing *into* $X$, this
 makes it a *backdoor path* between $X$ and $Y$.
 
 The idea of backdoor paths is one of the central ideas in Pearl's framework.
-Backdoor paths are not causal, but create problems when trying to estimate
+Backdoor paths are not causal, and create problems when trying to estimate
 causal effects. In the graph in @fig-three-var-confounding, we'd have to
 somehow close the backdoor path in order to obtain an unbiased estimate of the
-causal effect of $X$ on $Y$. In this case, the path can be close by adjusting
+causal effect of $X$ on $Y$. In this case, the path can be closed by adjusting
 for the $Z$ variable. We'll see how to do that in a bit.
 
 I'll first set up the Julia environment and simulate some values for the
@@ -335,10 +335,11 @@ Luckily, this also seems to work. So we can be somewhat off.
 Now, let's examine a DAG we know to be false, and compare the predictions of a
 model that's coded in line with that DAG, with those of the model coded in line
 with the true DAG. If my understanding is correct, both the causal DAG and the
-Bayesian network should be able to make predictions of similar accuracy.
+Bayesian network (i.e. the model coded up in line with the incorrect DAG)
+should be able to make predictions of similar accuracy.
 Moreover, they should make (practically) equivalent predictions. That
 would mean that values $\hat{y}^{cDAG}$ predicted from the causal DAG should be
-(practically )identical to the values $\hat{y}^{BN}$ predicted by a Bayesian
+(practically) identical to the values $\hat{y}^{BN}$ predicted by a Bayesian
 network.
 
 To check this claim, I'll try modeling the data according to the following
@@ -467,7 +468,7 @@ seem to make, for all practical intents and purposes, identical predictions.
 ## Predicting the effects of interventions
 
 But what does this all mean for predicting the effects of interventions, as one
-would do using Pearl's *do*-calculus, which assumes knowledge of the causal
+would do using Pearl's do-calculus, which assumes knowledge of the causal
  mechanism? According to
 @pearlCausalInferenceStatistics2016 an intervention can be represented in a DAG
 by removing all arrows going into the intervened upon variable.
@@ -531,7 +532,9 @@ This was our starting model specification:
     \mu_{y_i} &= 2 x_i + 4 z_i
 \end{align}
 
-We'll replace the second line with a constant:
+We'll replace the second line with a constant (the $\mu_{x_i}$ term is dropped
+because there is no longer a distribution of $X$, since it's been fixed to a
+constant):
 
 \begin{align}
     Z &\sim \text{normal}(1, 1) \\
@@ -540,8 +543,8 @@ We'll replace the second line with a constant:
     \mu_{y_i} &= 2 x_i + 4 z_i \\
 \end{align}
 
-We've said earlier that the expected value of $Y$ given some values of $X$ and
-$Z$ is equal to $\mu_{y_i}$:
+We've said earlier that values of $Y$ depend on values of $X$ and
+$Z$, and so does the expected value of $Y$, which is equal to $\mu_{y_i}$:
 
 \begin{equation}
     \mu_{y_i} = \text{E}(Y | X, Z).
@@ -655,7 +658,7 @@ digraph effects_G {
 ```
 
 As we can seen, once we've removed the arrow $X \textrightarrow Y$, and
-conditioning on $Z$, $X$ and $Y$ really are independent. Therefore, we can
+after conditioning on $Z$, $X$ and $Y$ really are independent. Therefore, we can
 replace $\text{E}(Y | do(X = 6), Z)$ with $\text{E}(Y | X = 6, Z)$. The final
 step is adjusting for $Z$, since it's confounding the causal relationship
 between $X$ and $Y$ [@pearlCausalInferenceStatistics2016].
@@ -787,12 +790,12 @@ $\text{E}(Y | do(X = 6), Z')$. According to our model,
 
 \begin{align}
     \text{E}(Y | do(X = 6), Z') &= \text{E}(Y | X = 6, Z') \\
-        &= b{XY} \times 6 + b{ZY} \times Z'.
+        &= b_{XY} \times 6 + b_{ZY} \times Z'.
 \end{align}
 
 To obtain an estimate of $\text{E}(Y | do(X = 6), Z)$ we can take our posterior
-estimates of $b_{XY}$ and $b_{ZY}$, simulate a
-set of $Z'$ values, and calculate
+estimates of $b_{XY}$ and $b_{ZY}$, simulate a set of $Z'$ and $Y'$
+values, and calculate
 
 $$
     \frac{1}{N} \sum_{i}^N (\hat{b}_{XY} \times 6 +
@@ -1032,7 +1035,8 @@ simulations to calculate the effects (and have only dealt with point estimates).
 This wasn't necessarily very complicated, but also wasn't simple and
 straightforward.
 
-There's an interesting text by @lattimoreCausalInferenceBayes2019, where they
+There's an interesting text by @lattimoreCausalInferenceBayes2019
+[also an extended version @lattimoreReplacingDocalculusBayes2021], where they
 claim that we can get estimates of causal effects using the Bayesian machinery,
 without having to use do-calculus at all. The idea is that we simultaneously fit
 a pre-intervention and post-intervention model. Sounds esoteric, but is
@@ -1043,13 +1047,22 @@ relatively simple in practice.
 Let's return to the model which is in line with the true directed acyclic graph
 (DAG). We've already mentioned that interventions can be represented by removing
 all arrows going into the variable that's being intervened upon.
-@lattimoreCausalInferenceBayes2019 take this idea an model the pre-intervention
+@lattimoreCausalInferenceBayes2019 take this idea and model the pre-intervention
 and post-intervention states simultaneously. A key step is to connect all
-variables which are not being intervened upon with a common, latent parameter.
-I'll label those parameters $\theta$, and subscript them with the variable
-they're referring to. For example, $\theta_X$ would be the parameter connecting
-the pre-intervention variable $X$ with the post-intervention variable, which
-I'll label $X'$.
+variables which are not being intervened upon with a common vector (or set) of
+parameters (which can also contain just a single parameter).
+I'll label those vectors $\theta$, and subscript them with the variable
+they're referring to. For example, $\theta_X$ would be the vector of parameters
+connecting the pre-intervention variable $X$ with the post-intervention
+variable, which I'll label $X'$.
+
+Now, I was not entirely sure how to translate their examples to the case at
+hand. I assumed that my $\theta$s should contain all parameters that define
+the pre- and post-intervention distributions. For example, $\theta_Z$ would
+contain $\mu_Z$ and $\sigma_Z$. On the other hand, $\theta_Y$ should contain
+$b_{XY}$, $b_{XZ}$ and $\sigma_Y$, as those three parameters determine the
+location and scale of the $Y$ and $Y'$ distributions (remember that
+$\mu_{y_i} = b_{XZ} x_i + b_{ZY} z_i$).
 
 So, keeping all that in mind, what we're trying to model is shown in
 @fig-simple-confounding-bayes-intervention-true.
@@ -1161,8 +1174,9 @@ First, I've coded the model using `Turing.jl`. After sampling from the joint
 model, I've asked `Turing` to generate quantities --- i.e. `Y_prime` --- from
 the model. For each iteration of the MCMC, `Y_prime` holds 50 samples from the
 distribution of $Y'$. After extracting the `Y_prime` values, I've calculated the
-mean of each sample of size 50, and then the mean of those means. What we get is
-suspiciously similar to the expected value we've calculated in 
+mean of each sample of size 50, and then the mean of those means, as well
+as the 0.1 and 0.9 quantiles. What we get is
+suspiciously similar to the expected value we've calculated in
 @sec-interventions-acccording-to-the-true-dag. This seems nice. However, as a sanity
 check, let's also try calculating the values implied by the wrong DAG.
 
@@ -1170,13 +1184,12 @@ check, let's also try calculating the values implied by the wrong DAG.
 
 Let's repeat the process from the previous section, but this time relying on the
 DAG we know to be wrong. We'll try getting both an estimate of the total effect
-and the natural direct and indirect effects. For the total effect, the model
-we're working with is:
+and the natural direct and indirect effects. The model we're working with is:
 
 ```{dot fig_wrong-dag_bayes-model_total}
 //| fig-align: center
 //| fig-cap: Graph with pre-intervention model on the left and post-intervention model on the right.
-//| label: fig-simple-confounding-bayes-intervention-true
+//| label: fig-simple-confounding-bayes-intervention-wrong-total
 
 digraph G {
     layout=dot;
@@ -1278,11 +1291,14 @@ Again, this aligns well with our earlier estimates of the total causal effect.
 Now, onto the natural direct effect. We've previously used $X = 0$ as a
 baseline, and have said that we're interested in the change in the expected
 value of $Y$ when we change $X$ to 6, while holding $Z$ at the values they would
-have attained had $X$ had been 0.
-
-TODO:dodaj graf
-
-Let's code that into the model:
+have attained had $X$ been 0. @pearlCausalInferenceStatistics2016 tells
+us that, in certain cases, we can represent this essentially counterfactual
+claim with an expression employing do-operators both on the $X$ variable and the
+mediator $Z$. Therefore, I get the feeling that
+@lattimoreCausalInferenceBayes2019 would require us to intervene both on $X$ and
+$Z$, thereby removing $\theta_Z$. However, since we're not fixing the *value* of
+$Z$, but its location and scale parameters, I'll code the models so that the
+the vector $\theta_Z$ is still present:
 
 ```{julia fit-simultaneous-wrong-dag-nde}
 #| warning: false
@@ -1353,9 +1369,12 @@ This also aligns nicely with the values we've calculated earlier. Finally,
 let's try the natural indirect effect. Here, $X$ is held at the baseline value
 0, and we're interested in the change in the expected value of $Y$ when the
 $Z$ variable changes from values it would have had under $X = 0$ to values it
-would have under $X = 6$. Therefore, we're working with this graph:
-
-Let's try coding this into the model:
+would have under $X = 6$. We'll, therefore, have to calculate two values of $Z'$,
+one with $X = 6$ and the other with $X = 0$, look at the distributions of $Y'$
+they imply (together with $X$), and subtract the distribution's expectations
+(I'll calculate the differences between the values within the `Turing` model and
+the expectations of those differences outside of the model). Let's try coding
+this into the model:
 
 ```{julia fit-simultaneous-wrong-dag-nie}
 #| warning: false
@@ -1430,6 +1449,31 @@ quantile(Y_diff_exp,
 
 We again get a similar results, which is great!
 
+# Conclusion
+
+This long ride through these two simple DAGs was a way for me to piece together
+a lot of the things I've read about in the past few months (or years), while
+also using it as a chance to practice Julia. I think writing this has helped me
+to get a clearer understanding of causal DAGs, Bayesian networks/models,
+do-calculus and mediation, and I hope you've found parts of it useful, too.
+
+What brings me the most joy is that I've seemingly managed to tackle my way
+through various concepts about which I've had some pretty vague ideas up
+until now. Some things clicked. It also makes me happy that the various
+approaches to estimation converged (to a correct results, I hope).
+
+Finally, my takeaway from this is that (generative) Bayesian models are cool.
+That we can correctly "predict" (well, retrodict) results based on a DAG that's
+incorrect is cool. That we cannot predict the effects of interventions based on
+a DAG that's incorrect is less cool, but it's good to know (and see in simulated
+data).
+
+Regarding the @lattimoreCausalInferenceBayes2019 method: this is a really cool
+find and I'd love to try it out in a more complex setting. I *did* fit
+(basically) the same model three times; upon reflection, could've probably done
+it in a single `generated_quantities` call, and just ask the function to return
+some collection of the various results. That's for another time.
+
 [^counterfactuals]: Hello, counterfactuals!
 [^mu_x]: I'm putting unknown values (e.g. $\mu_X$) instead of fixed values (e.g.
 1) because the DAG, by itself, does not imply any specific form of the
@@ -1440,11 +1484,11 @@ $do(\cdot)$ notation I'm using here. From my reading, Pearl started to use the
 $do(\cdot)$ operator in his later work. In the text referenced here,
 $p(Y | \check{X})$ is equal to $p(Y | do(X = x))$.
 [^natural_effect]: I won't go into the nuances of why the word "natural" is
-doing a fair amount of work here. See 
+doing a fair amount of work here. See
 @pearlIntroductionCausalInference2010,
 @pearlInterpretationIdentificationCausal2014 or
 @pearlMediationFormulaGuide for more information.
 [^natural_direct_eff]: @pearlCausalInferenceStatistics2016 actually define the
 natural direct effect as the expected increase in $Y$ when $X$ changes from some
-starting value $x_0$ to some value $x$. In our case, we can imagine that $x =
-0$, as we're interested in the actual expected value of $Y$, and not the change.
+starting value $x_0$ to some value $x$. In our case, we can imagine that $x_0 =
+0$. That will make our comparison setup equal to the one for the total effect.
